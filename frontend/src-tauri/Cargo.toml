@@ -33,7 +33,22 @@ parking_lot = "0.12.5"
 log = "0.4.34"
 bytemuck = "1.25.2"
 base64 = "0.23.1"
+tauri-plugin-fs = "2.6.0"
+tract-linalg = { version = "0.23.8", features = ["multithread-mm"] }
 
+
+# Inference (tract, align, matcher) optimallashtirilmagan holda 10–50 marta sekin: dev build
+# ham optimallashtiriladi, aks holda debug APK'dagi o'lchovlar ma'nosiz bo'ladi.
+# Debug ma'lumoti kamaytirilgan — to'liq bo'lsa, APK 650 MB ga yetadi.
+[profile.dev]
+opt-level = 3
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

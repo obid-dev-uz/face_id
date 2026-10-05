@@ -1,1 +1,128 @@
-//! Yuz aniqlash, tekislash, embedding va solishtirish (4-bosqich).
+//! Yuz aniqlash, tekislash, embedding va solishtirish. Butun konveyer sof Rust'da
+//! (tract), shuning uchun har bir platformada bir xil natija beradi.
+
+pub mod align;
+pub mod backend;
+pub mod detector;
+pub mod embedder;
+pub mod matcher;
+pub mod quality;
+
+use std::time::Instant;
+
+use image::RgbImage;
+use serde::Serialize;
+
+use detector::Detector;
+use embedder::Embedder;
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Face {
+    /// `[x, y, w, h]` asl rasm koordinatalarida.
+    pub bbox: [f32; 4],
+    pub score: f32,
+    /// O'ng ko'z, chap ko'z, burun, og'izning o'ng va chap burchagi.
+    pub landmarks: [[f32; 2]; 5],
+}
+
+impl Face {
+    fn scale(&mut self, k: f32) {
+        self.bbox.iter_mut().for_each(|v| *v *= k);
+        self.landmarks.iter_mut().flatten().for_each(|v| *v *= k);
+    }
+
+    fn clip(&mut self, w: f32, h: f32) {
+        let [x, y, bw, bh] = self.bbox;
+        let (x0, y0) = (x.clamp(0.0, w), y.clamp(0.0, h));
+        let (x1, y1) = ((x + bw).clamp(0.0, w), (y + bh).clamp(0.0, h));
+        self.bbox = [x0, y0, x1 - x0, y1 - y0];
+    }
+}
+
+pub struct FaceEngine {
+    pub detector: Detector,
+    pub embedder: Embedder,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Timings {
+    pub detect_ms: f64,
+    pub align_ms: f64,
+    pub embed_ms: f64,
+}
+
+pub struct Analyzed {
+    pub face: Face,
+    pub aligned: RgbImage,
+    pub transform: align::Similarity,
+    pub embedding: Vec<f32>,
+}
+
+impl FaceEngine {
+    pub const DIM: usize = 128;
+    /// Bazadagi `face_embeddings.model` qiymati: embeddinglar faqat bir xil model ichida
+    /// solishtiriladi. SFace int8 varianti tract'da ishlamaydi (QLinearMul yo'q).
+    pub const MODEL_ID: &'static str = "sface-2021dec";
+
+    pub fn load(yunet: &[u8], sface: &[u8], det_w: usize, det_h: usize) -> anyhow::Result<Self> {
+        Ok(Self { detector: Detector::load(yunet, det_w, det_h)?, embedder: Embedder::load(sface)? })
+    }
+
+    /// Rasmdagi barcha yuzlarni aniqlab, har biri uchun embedding hisoblaydi.
+    pub fn analyze(&self, img: &RgbImage, max_faces: usize) -> anyhow::Result<(Vec<Analyzed>, Timings)> {
+        let mut t = Timings::default();
+        let t0 = Instant::now();
+        let faces = self.detector.detect(img)?;
+        t.detect_ms = ms(t0);
+        let mut out = Vec::new();
+        for face in faces.into_iter().take(max_faces) {
+            let t0 = Instant::now();
+            let (aligned, transform) = align::align(img, &face.landmarks);
+            t.align_ms += ms(t0);
+            let t0 = Instant::now();
+            let embedding = self.embedder.embed(&aligned)?;
+            t.embed_ms += ms(t0);
+            out.push(Analyzed { face, aligned, transform, embedding });
+        }
+        Ok((out, t))
+    }
+}
+
+fn ms(t0: Instant) -> f64 {
+    t0.elapsed().as_secs_f64() * 1000.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Haqiqiy modellar bilan; modellar yuklanmagan bo'lsa (scripts/fetch-models.sh) o'tkazib yuboriladi.
+    fn engine() -> Option<FaceEngine> {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/models");
+        let yunet = std::fs::read(dir.join("face_detection_yunet_2023mar.onnx")).ok()?;
+        let sface = std::fs::read(dir.join("face_recognition_sface_2021dec.onnx")).ok()?;
+        Some(FaceEngine::load(&yunet, &sface, 320, 256).unwrap())
+    }
+
+    #[test]
+    fn real_models_run_and_are_deterministic() {
+        let Some(e) = engine() else {
+            eprintln!("modellar yo'q — test o'tkazib yuborildi");
+            return;
+        };
+        // Yuzsiz kadr: yolg'on topilma bo'lmasligi kerak
+        let blank = RgbImage::from_pixel(640, 480, image::Rgb([128, 128, 128]));
+        assert!(e.detector.detect(&blank).unwrap().is_empty());
+
+        // Embedding L2-normallangan va bir xil kirishda aynan bir xil
+        let crop = RgbImage::from_fn(112, 112, |x, y| image::Rgb([(x * 2) as u8, (y * 2) as u8, ((x + y) % 256) as u8]));
+        let a = e.embedder.embed(&crop).unwrap();
+        let b = e.embedder.embed(&crop).unwrap();
+        assert_eq!(a.len(), FaceEngine::DIM);
+        assert_eq!(a, b);
+        let norm: f32 = a.iter().map(|v| v * v).sum::<f32>().sqrt();
+        assert!((norm - 1.0).abs() < 1e-4);
+    }
+}

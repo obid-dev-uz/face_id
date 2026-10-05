@@ -4,3 +4,7 @@ frontend/src-tauri/gen/android/app/src/main/jniLibs/
 *.jks
 *.keystore
 *.tsbuildinfo
+
+# Modellar scripts/fetch-models.sh bilan yuklanadi
+frontend/src-tauri/resources/models/*.onnx
+frontend/src-tauri/gen/android/app/src/main/assets/

@@ -8,10 +8,22 @@ pub enum AppError {
     Io(#[from] std::io::Error),
     #[error("tauri xatosi: {0}")]
     Tauri(#[from] tauri::Error),
+    #[error("modellar hali yuklanmoqda")]
+    NotReady,
+    #[error("model xatosi: {0}")]
+    Engine(String),
+    #[error("rasm xatosi: {0}")]
+    Image(#[from] image::ImageError),
     #[error("topilmadi: {0}")]
     NotFound(&'static str),
     #[error("noto'g'ri qiymat: {0}")]
     Invalid(String),
+}
+
+impl From<anyhow::Error> for AppError {
+    fn from(e: anyhow::Error) -> Self {
+        AppError::Engine(format!("{e:#}"))
+    }
 }
 
 /// Frontend `invoke` xatoni oddiy matn sifatida oladi.

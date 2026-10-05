@@ -51,3 +51,73 @@ export const api = {
   backupDatabase: (dest?: string) => invoke<string>("backup_database", { dest }),
   restoreDatabase: (src: string) => invoke<void>("restore_database", { src }),
 };
+
+export interface EngineStatus {
+  state: "loading" | "ready" | "failed";
+  error: string | null;
+  modelId: string;
+  samples: number;
+}
+
+export type QualityIssue = "tooSmall" | "lowScore" | "blurry" | "notFrontal" | "tooDark" | "tooBright";
+
+export interface FoundFace {
+  face: { bbox: [number, number, number, number]; score: number; landmarks: [number, number][] };
+  quality: { faceWidth: number; score: number; sharpness: number; yawDeg: number; brightness: number; issues: QualityIssue[] };
+  personId: number | null;
+  personName: string | null;
+  score: number | null;
+}
+
+export interface Analysis {
+  width: number;
+  height: number;
+  faces: FoundFace[];
+  timings: { detectMs: number; alignMs: number; embedMs: number };
+  decodeMs: number;
+  matchMs: number;
+}
+
+export interface Stat {
+  avgMs: number;
+  minMs: number;
+  maxMs: number;
+}
+
+export interface InferenceStats {
+  threads: number;
+  detect640: Stat;
+  detect320: Stat;
+  detect160: Stat;
+  embed: Stat;
+}
+
+export interface Benchmark {
+  iterations: number;
+  facesFound: number;
+  single: InferenceStats;
+  multi: InferenceStats;
+  align: Stat;
+  match10k: Stat;
+  arch: string;
+}
+
+export const engineApi = {
+  status: () => invoke<EngineStatus>("engine_status"),
+  /** Rasm baytlari xom holda yuboriladi (base64'siz). */
+  analyzeImage: (bytes: Uint8Array) => invoke<Analysis>("analyze_image", bytes),
+  benchmark: (bytes: Uint8Array | null, iterations = 10) =>
+    invoke<Benchmark>("benchmark_engine", bytes || new Uint8Array(0), {
+      headers: { "x-iterations": String(iterations) },
+    }),
+};
+
+/** Chrome 53 (Android 7 WebView) da Blob.arrayBuffer() yo'q. */
+export function readFile(file: Blob): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(new Uint8Array(r.result as ArrayBuffer));
+    r.onerror = () => reject(r.error);
+    r.readAsArrayBuffer(file);
+  });
+}

@@ -141,6 +141,7 @@ pub struct NewEmbedding {
     pub model: String,
     pub vector: Vec<f32>,
     pub quality: Option<f32>,
+    /// Tekislangan 112×112 yuz, PNG: model almashganda shundan qayta hisoblanadi (yo'qotishsiz format).
     pub thumb: Option<Vec<u8>>,
     pub device: Option<String>,
 }
@@ -205,6 +206,44 @@ pub fn delete_embedding(conn: &Connection, id: i64) -> AppResult<()> {
         return Err(AppError::NotFound("namuna"));
     }
     Ok(())
+}
+
+#[derive(Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReindexReport {
+    pub updated: usize,
+    /// Rasmi (thumb) saqlanmagan eski namunalar: ularni qayta hisoblab bo'lmaydi.
+    pub skipped: usize,
+}
+
+/// Model almashtirilganda: boshqa modeldagi namunalarni saqlangan tekislangan rasmdan
+/// (`thumb`) qayta hisoblaydi. Hammasi bitta tranzaksiyada — yarim yo'lda to'xtamaydi.
+pub fn reembed_outdated(
+    conn: &mut Connection,
+    model: &str,
+    mut embed: impl FnMut(&[u8]) -> AppResult<Vec<f32>>,
+) -> AppResult<ReindexReport> {
+    let tx = conn.transaction()?;
+    let rows: Vec<(i64, Option<Vec<u8>>)> = {
+        let mut st = tx.prepare("SELECT id, thumb FROM face_embeddings WHERE model <> ?1")?;
+        let rows = st.query_map([model], |r| Ok((r.get(0)?, r.get(1)?)))?;
+        rows.collect::<Result<_, _>>()?
+    };
+    let mut report = ReindexReport::default();
+    for (id, thumb) in rows {
+        let Some(thumb) = thumb else {
+            report.skipped += 1;
+            continue;
+        };
+        let v = embed(&thumb)?;
+        tx.execute(
+            "UPDATE face_embeddings SET model = ?2, dim = ?3, vector = ?4 WHERE id = ?1",
+            params![id, model, v.len() as i64, vec_to_blob(&v)],
+        )?;
+        report.updated += 1;
+    }
+    tx.commit()?;
+    Ok(report)
 }
 
 // ---------- Jurnal ----------
@@ -391,6 +430,35 @@ mod tests {
         let id = load_embeddings(&c, "sface").unwrap()[0].id;
         delete_embedding(&c, id).unwrap();
         assert_eq!(get_person(&c, p.id).unwrap().sample_count, 0);
+    }
+
+    #[test]
+    fn reembed_outdated_uses_thumbs() {
+        let mut c = open_in_memory().unwrap();
+        let old = |thumb: Option<Vec<u8>>| NewEmbedding { model: "old".into(), thumb, ..sample(&[1.0, 0.0]) };
+        create_person(&mut c, &input("Ali"), &[old(Some(vec![7])), old(None), sample(&[0.0, 1.0])]).unwrap();
+
+        let r = reembed_outdated(&mut c, "sface", |thumb| Ok(vec![thumb[0] as f32, 0.0, 0.0])).unwrap();
+        assert_eq!(r, ReindexReport { updated: 1, skipped: 1 });
+        let v: Vec<_> = load_embeddings(&c, "sface").unwrap().into_iter().map(|e| e.vector).collect();
+        assert_eq!(v, [vec![7.0, 0.0, 0.0], vec![0.0, 1.0]]);
+        // Takroriy chaqiruv hech narsani o'zgartirmaydi (rasmsizi qoladi)
+        assert_eq!(reembed_outdated(&mut c, "sface", |_| unreachable!()).unwrap(), ReindexReport { updated: 0, skipped: 1 });
+    }
+
+    #[test]
+    fn reembed_failure_rolls_back() {
+        let mut c = open_in_memory().unwrap();
+        let old = NewEmbedding { model: "old".into(), thumb: Some(vec![1]), ..sample(&[1.0]) };
+        create_person(&mut c, &input("Ali"), &[old.clone(), old]).unwrap();
+        let mut n = 0;
+        let r = reembed_outdated(&mut c, "sface", |_| {
+            n += 1;
+            if n == 2 { Err(AppError::Invalid("x".into())) } else { Ok(vec![1.0]) }
+        });
+        assert!(r.is_err());
+        assert!(load_embeddings(&c, "sface").unwrap().is_empty());
+        assert_eq!(load_embeddings(&c, "old").unwrap().len(), 2);
     }
 
     #[test]

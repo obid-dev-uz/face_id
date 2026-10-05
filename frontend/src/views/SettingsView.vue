@@ -5,6 +5,7 @@ import { useAppStore } from "../stores/app";
 import { LOCALES, setLocale, type Locale } from "../i18n";
 import { api } from "../api";
 import { isTauri } from "../platform";
+import EngineDiagnostics from "../components/EngineDiagnostics.vue";
 
 const { locale } = useI18n();
 const app = useAppStore();
@@ -52,6 +53,9 @@ async function makeBackup() {
     <p v-if="backupResult" :class="backupResult.ok ? 'muted wrap' : 'error'">
       <template v-if="backupResult.ok">{{ $t("settings.backupDone") }}: </template>{{ backupResult.text }}
     </p>
+
+    <h2 class="section-title">{{ $t("diag.title") }}</h2>
+    <EngineDiagnostics />
 
     <h2 class="section-title">{{ $t("settings.about") }}</h2>
     <p v-if="app.error" class="error">{{ app.error }}</p>
