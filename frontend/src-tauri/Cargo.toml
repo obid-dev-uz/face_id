@@ -33,6 +33,7 @@ parking_lot = "0.12.5"
 log = "0.4.34"
 bytemuck = "1.25.2"
 base64 = "0.23.1"
+tauri-plugin-khoface-camera = { path = "plugins/khoface-camera" }
 tauri-plugin-fs = "2.6.0"
 tract-linalg = { version = "0.23.8", features = ["multithread-mm"] }
 

@@ -2,6 +2,18 @@ export default {
   nav: { live: "Kamera", persons: "Shaxslar", enroll: "Qo'shish", logs: "Jurnal", settings: "Sozlamalar" },
   placeholder: "Bu bo'lim keyingi bosqichlarda tayyor bo'ladi.",
   settings: { data: "Ma'lumotlar", backup: "Zaxira nusxa yaratish", backupDone: "Saqlandi", language: "Til", about: "Ilova haqida", loading: "Yuklanmoqda…" },
+  camera: {
+    starting: "Kamera ishga tushmoqda…",
+    deniedTitle: "Kameraga ruxsat kerak",
+    deniedText: "Yuzlarni tanish uchun ilova kameradan foydalanadi. Tasvirlar faqat shu qurilmada qayta ishlanadi.",
+    retry: "Qayta urinish",
+    openSettings: "Sozlamalarni ochish",
+    unsupported: "Bu platformada kamera hali qo'llab-quvvatlanmaydi.",
+    noCamera: "Qurilmada bunday kamera topilmadi.",
+    toBack: "Orqa kamera",
+    toFront: "Old kamera",
+    latency: "kechikish",
+  },
   diag: {
     threads: "oqim",
     title: "Diagnostika",

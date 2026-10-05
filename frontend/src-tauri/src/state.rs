@@ -20,6 +20,7 @@ pub struct AppState {
     pub data_dir: PathBuf,
     pub engine: RwLock<EngineState>,
     pub matcher: RwLock<Matcher>,
+    pub stream: crate::camera::stream::Stream,
 }
 
 impl AppState {
@@ -29,6 +30,7 @@ impl AppState {
             data_dir,
             engine: RwLock::new(EngineState::Loading),
             matcher: RwLock::new(Matcher::new(FaceEngine::DIM)),
+            stream: Default::default(),
         }
     }
 

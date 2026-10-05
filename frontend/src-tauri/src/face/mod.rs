@@ -41,7 +41,10 @@ impl Face {
 }
 
 pub struct FaceEngine {
+    /// Galereya rasmlari uchun (katta kirish, aniqroq).
     pub detector: Detector,
+    /// Kamera oqimi uchun (160×160): eski telefonda ~60 ms.
+    pub live_detector: Detector,
     pub embedder: Embedder,
 }
 
@@ -66,8 +69,14 @@ impl FaceEngine {
     /// solishtiriladi. SFace int8 varianti tract'da ishlamaydi (QLinearMul yo'q).
     pub const MODEL_ID: &'static str = "sface-2021dec";
 
+    pub const LIVE_DET: usize = 160;
+
     pub fn load(yunet: &[u8], sface: &[u8], det_w: usize, det_h: usize) -> anyhow::Result<Self> {
-        Ok(Self { detector: Detector::load(yunet, det_w, det_h)?, embedder: Embedder::load(sface)? })
+        Ok(Self {
+            detector: Detector::load(yunet, det_w, det_h)?,
+            live_detector: Detector::load(yunet, Self::LIVE_DET, Self::LIVE_DET)?,
+            embedder: Embedder::load(sface)?,
+        })
     }
 
     /// Rasmdagi barcha yuzlarni aniqlab, har biri uchun embedding hisoblaydi.

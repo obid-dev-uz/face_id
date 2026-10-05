@@ -13,6 +13,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_khoface_camera::init())
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
@@ -35,6 +36,13 @@ pub fn run() {
             commands::settings::set_setting,
             commands::backup::backup_database,
             commands::backup::restore_database,
+            commands::camera::camera_permission,
+            commands::camera::request_camera_permission,
+            commands::camera::open_app_settings,
+            commands::camera::camera_availability,
+            commands::camera::start_stream,
+            commands::camera::stop_stream,
+            commands::camera::camera_ack,
             commands::engine::engine_status,
             commands::engine::analyze_image,
             commands::engine::benchmark_engine,

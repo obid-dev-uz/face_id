@@ -2,6 +2,18 @@ export default {
   nav: { live: "Camera", persons: "People", enroll: "Add", logs: "Log", settings: "Settings" },
   placeholder: "This section arrives in a later phase.",
   settings: { data: "Data", backup: "Create backup", backupDone: "Saved", language: "Language", about: "About", loading: "Loading…" },
+  camera: {
+    starting: "Starting camera…",
+    deniedTitle: "Camera access needed",
+    deniedText: "The app uses the camera to recognise faces. Images are processed only on this device.",
+    retry: "Try again",
+    openSettings: "Open settings",
+    unsupported: "The camera is not supported on this platform yet.",
+    noCamera: "No such camera on this device.",
+    toBack: "Back camera",
+    toFront: "Front camera",
+    latency: "latency",
+  },
   diag: {
     threads: "threads",
     title: "Diagnostics",

@@ -12,6 +12,8 @@ pub enum AppError {
     NotReady,
     #[error("model xatosi: {0}")]
     Engine(String),
+    #[error("kamera: {0}")]
+    Camera(String),
     #[error("rasm xatosi: {0}")]
     Image(#[from] image::ImageError),
     #[error("topilmadi: {0}")]

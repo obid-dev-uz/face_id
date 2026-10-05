@@ -2202,6 +2202,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-fs",
+ "tauri-plugin-khoface-camera",
  "tauri-plugin-opener",
  "thiserror 2.0.21",
  "tract-linalg",
@@ -4208,6 +4209,18 @@ dependencies = [
  "thiserror 2.0.21",
  "toml 1.1.6+spec-1.1.0",
  "url",
+]
+
+[[package]]
+name = "tauri-plugin-khoface-camera"
+version = "0.1.0"
+dependencies = [
+ "jni",
+ "parking_lot",
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

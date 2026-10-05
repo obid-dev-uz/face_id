@@ -1,7 +1,83 @@
 <script setup lang="ts">
-import PlaceholderPage from "../components/PlaceholderPage.vue";
+import { computed, onMounted } from "vue";
+import { useCamera } from "../composables/useCamera";
+
+const cam = useCamera();
+onMounted(() => cam.start());
+
+/** Old kamerada tasvir ko'zgu kabi ko'rsatiladi, ramkalar ham shunga moslanadi. */
+const boxes = computed(() => {
+  const h = cam.header.value;
+  if (!h) return [];
+  return h.faces.map((f) => {
+    const [x, y, w, bh] = f.bbox;
+    const left = h.mirrored ? h.width - x - w : x;
+    return {
+      left: (left / h.width) * 100 + "%",
+      top: (y / h.height) * 100 + "%",
+      width: (w / h.width) * 100 + "%",
+      height: (bh / h.height) * 100 + "%",
+      score: f.score,
+    };
+  });
+});
 </script>
 
 <template>
-  <PlaceholderPage :title="$t('nav.live')" />
+  <section class="page live">
+    <div v-if="cam.status.value === 'denied'" class="notice">
+      <h2>{{ $t("camera.deniedTitle") }}</h2>
+      <p class="muted">{{ $t("camera.deniedText") }}</p>
+      <button type="button" class="btn" @click="cam.start()">{{ $t("camera.retry") }}</button>
+      <button type="button" class="btn spaced" @click="cam.openSettings()">{{ $t("camera.openSettings") }}</button>
+    </div>
+    <div v-else-if="cam.status.value === 'unsupported'" class="notice">
+      <p class="muted">{{ $t("camera.unsupported") }}</p>
+    </div>
+    <div v-else-if="cam.status.value === 'noCamera'" class="notice">
+      <p class="muted">{{ $t("camera.noCamera") }}</p>
+    </div>
+    <div v-else-if="cam.status.value === 'error'" class="notice">
+      <p class="error wrap">{{ cam.error.value }}</p>
+      <button type="button" class="btn" @click="cam.start()">{{ $t("camera.retry") }}</button>
+    </div>
+
+    <template v-else>
+      <div class="viewer">
+        <img
+          v-if="cam.frameUrl.value"
+          :src="cam.frameUrl.value"
+          :class="{ mirrored: cam.header.value && cam.header.value.mirrored }"
+          alt=""
+          @load="cam.frameShown"
+        />
+        <div v-else class="placeholder muted">{{ $t("camera.starting") }}</div>
+        <div v-for="(b, i) in boxes" :key="i" class="box" :style="b" />
+      </div>
+
+      <div class="controls">
+        <button type="button" class="btn" @click="cam.switchFacing()">
+          {{ cam.facing.value === "front" ? $t("camera.toBack") : $t("camera.toFront") }}
+        </button>
+      </div>
+      <p v-if="cam.header.value" class="stats muted">
+        {{ cam.header.value.fps }} fps · detect {{ cam.header.value.detectMs.toFixed(0) }} ms ·
+        jpeg {{ cam.header.value.encodeMs.toFixed(0) }} ms · {{ $t("camera.latency") }}
+        {{ cam.header.value.latencyMs.toFixed(0) }} ms · {{ cam.header.value.width }}×{{ cam.header.value.height }}
+      </p>
+    </template>
+  </section>
 </template>
+
+<style scoped>
+.viewer { position: relative; line-height: 0; background: #000; border-radius: 12px; overflow: hidden; min-height: 200px; }
+.viewer img { width: 100%; height: auto; }
+.viewer img.mirrored { -webkit-transform: scaleX(-1); transform: scaleX(-1); }
+.placeholder { line-height: 1.4; padding: 80px 16px; text-align: center; color: #98a2b3; }
+.box { position: absolute; border: 2px solid #f79009; border-radius: 6px; }
+.controls { margin-top: 12px; }
+.stats { font-size: 12px; margin-top: 8px; }
+.notice { padding: 24px 0; }
+.notice h2 { font-size: 18px; margin: 0 0 8px; }
+.spaced { margin-top: 8px; }
+</style>

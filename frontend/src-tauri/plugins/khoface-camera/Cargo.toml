@@ -1,0 +1,19 @@
+[package]
+name = "tauri-plugin-khoface-camera"
+version = "0.1.0"
+edition = "2021"
+description = "KHOFace: Android CameraX kadrlarini Rust'ga uzatuvchi Tauri plagini"
+publish = false
+links = "tauri-plugin-khoface-camera"
+
+[dependencies]
+tauri = { version = "2" }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+parking_lot = "0.12"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
