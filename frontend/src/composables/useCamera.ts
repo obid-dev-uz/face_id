@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref, shallowRef } from "vue";
 import { Channel, invoke } from "@tauri-apps/api/core";
-import { isMobile } from "../platform";
+import { isTauri } from "../platform";
 
 export type Facing = "front" | "back";
 export type PermissionState = "granted" | "denied" | "prompt" | "prompt-with-rationale";
@@ -60,7 +60,7 @@ export function useCamera() {
   }
 
   async function start(which: Facing = facing.value) {
-    if (!isMobile()) {
+    if (!isTauri) {
       status.value = "unsupported";
       return;
     }

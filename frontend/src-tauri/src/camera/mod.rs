@@ -1,6 +1,8 @@
 //! Kamera manbalari. Har bir platforma kadrni [`FrameBus`] ga yozadi; oqim ishchisi
 //! ([`stream`]) uni o'qiydi. Platformaga xos qism faqat kadr qanday olinishida.
 
+#[cfg(all(desktop, feature = "desktop-camera"))]
+pub mod desktop;
 pub mod stream;
 pub mod yuv;
 

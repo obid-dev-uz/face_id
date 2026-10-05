@@ -29,6 +29,14 @@ pub async fn open_app_settings(app: AppHandle) -> AppResult<()> {
 
 #[tauri::command]
 pub async fn camera_availability(app: AppHandle) -> AppResult<CameraAvailability> {
+    #[cfg(all(desktop, feature = "desktop-camera"))]
+    return blocking(move || {
+        let _ = app;
+        let n = crate::camera::desktop::camera_count();
+        Ok(CameraAvailability { front: n > 0, back: n > 1 })
+    })
+    .await;
+    #[cfg(not(all(desktop, feature = "desktop-camera")))]
     blocking(move || Ok(app.camera().availability()?)).await
 }
 
@@ -39,9 +47,13 @@ pub async fn start_stream(app: AppHandle, facing: Facing, on_frame: Channel<Invo
         state.stream.start(app.clone(), on_frame);
         #[cfg(target_os = "android")]
         crate::camera::android::attach(state.stream.bus.clone());
-        if let Err(e) = app.camera().start(facing, 640, 480) {
+        #[cfg(all(desktop, feature = "desktop-camera"))]
+        let started = crate::camera::desktop::start(state.stream.bus.clone(), facing);
+        #[cfg(not(all(desktop, feature = "desktop-camera")))]
+        let started = app.camera().start(facing, 640, 480).map_err(AppError::from);
+        if let Err(e) = started {
             state.stream.stop_worker();
-            return Err(e.into());
+            return Err(e);
         }
         Ok(())
     })
@@ -52,6 +64,9 @@ pub async fn start_stream(app: AppHandle, facing: Facing, on_frame: Channel<Invo
 pub async fn stop_stream(app: AppHandle) -> AppResult<()> {
     blocking(move || {
         let state = tauri::Manager::state::<AppState>(&app);
+        #[cfg(all(desktop, feature = "desktop-camera"))]
+        crate::camera::desktop::stop();
+        #[cfg(not(all(desktop, feature = "desktop-camera")))]
         app.camera().stop()?;
         #[cfg(target_os = "android")]
         crate::camera::android::detach();

@@ -38,6 +38,14 @@ tauri-plugin-fs = "2.6.0"
 tract-linalg = { version = "0.23.8", features = ["multithread-mm"] }
 
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+nokhwa = { version = "0.10.11", features = ["input-native"], optional = true }
+
+[features]
+# Desktop kamera (nokhwa). Hozircha faqat Android ustida ishlanmoqda; Linux'da build uchun
+# libclang kerak (`apt install libclang-dev`). Yoqish: `pnpm tauri dev --features desktop-camera`
+desktop-camera = ["dep:nokhwa"]
+
 # Inference (tract, align, matcher) optimallashtirilmagan holda 10–50 marta sekin: dev build
 # ham optimallashtiriladi, aks holda debug APK'dagi o'lchovlar ma'nosiz bo'ladi.
 # Debug ma'lumoti kamaytirilgan — to'liq bo'lsa, APK 650 MB ga yetadi.
@@ -58,3 +66,7 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+[[example]]
+name = "camera_snap"
+required-features = ["desktop-camera"]
