@@ -1,0 +1,6 @@
+# Qolganlari frontend/.gitignore, src-tauri/.gitignore va gen/android/.gitignore da
+frontend/src-tauri/gen/android/.kotlin/
+frontend/src-tauri/gen/android/app/src/main/jniLibs/
+*.jks
+*.keystore
+*.tsbuildinfo

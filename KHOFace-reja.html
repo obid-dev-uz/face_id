@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KHOFace yo'l xaritasi</title>
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f0f2f5; --border:#dfe3e8;
+  --text:#1b1f24; --muted:#5d6670; --accent:#2f6fde; --accent-soft:#e6eefc;
+  --ok:#1f8a4c; --ok-soft:#e3f4ea; --warn:#a86400; --warn-soft:#fdf1dc;
+  --danger:#b4232a; --danger-soft:#fbe7e8; --android:#2e8b57; --android-soft:#e2f3ea;
+  --code-bg:#f3f5f8; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418; --surface:#181c21; --surface-2:#1f242a; --border:#2c333b;
+    --text:#e6e9ed; --muted:#9aa4af; --accent:#6ea0ff; --accent-soft:#1d2a40;
+    --ok:#4cc382; --ok-soft:#173226; --warn:#f0b35a; --warn-soft:#3a2c14;
+    --danger:#ff7b7b; --danger-soft:#3a1b1d; --android:#5fd08f; --android-soft:#16301f;
+    --code-bg:#0f1216; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111418; --surface:#181c21; --surface-2:#1f242a; --border:#2c333b;
+  --text:#e6e9ed; --muted:#9aa4af; --accent:#6ea0ff; --accent-soft:#1d2a40;
+  --ok:#4cc382; --ok-soft:#173226; --warn:#f0b35a; --warn-soft:#3a2c14;
+  --danger:#ff7b7b; --danger-soft:#3a1b1d; --android:#5fd08f; --android-soft:#16301f;
+  --code-bg:#0f1216; --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif}
+code,pre{font-family:ui-monospace,"JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace}
+a{color:var(--accent)}
+header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.top-inner{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;letter-spacing:-.01em}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.grow{flex:1}
+.progress-wrap{min-width:180px;flex:1;max-width:340px}
+.progress-label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+.bar>span{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+input[type=search]{background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 10px;font:inherit;width:200px;max-width:100%}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.osbar{max-width:1240px;margin:0 auto;padding:0 16px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.osbar .lbl{font-size:12px;color:var(--muted);margin-right:4px}
+.osbtn{font-size:12.5px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.osbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.osbtn[data-os=android].on{background:var(--android);border-color:var(--android)}
+.layout{max-width:1240px;margin:0 auto;padding:20px 16px 80px;display:grid;grid-template-columns:250px 1fr;gap:24px}
+nav.side{position:sticky;top:120px;align-self:start;max-height:calc(100vh - 136px);overflow:auto}
+nav.side a{display:flex;justify-content:space-between;gap:8px;text-decoration:none;color:var(--text);
+  padding:6px 10px;border-radius:7px;font-size:14px}
+nav.side a:hover{background:var(--surface-2)}
+nav.side a.active{background:var(--accent-soft);color:var(--accent)}
+nav.side .cnt{font-size:12px;color:var(--muted);white-space:nowrap}
+nav.side .cnt.done{color:var(--ok)}
+nav.side h4{margin:16px 10px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+main{min-width:0}
+section.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:18px;scroll-margin-top:130px}
+.card-pad{padding:18px 20px}
+h1{font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:19px;margin:0}
+h3{font-size:15px;margin:18px 0 8px}
+p{margin:6px 0 10px}
+.muted{color:var(--muted)}
+.lead{color:var(--muted);max-width:820px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.mini b{display:block;margin-bottom:2px}
+.mini span{font-size:13px;color:var(--muted)}
+.mini.android{border-color:var(--android);background:var(--android-soft)}
+/* platform matrix */
+.st{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.st.ok{background:var(--ok-soft);color:var(--ok)}
+.st.risk{background:var(--warn-soft);color:var(--warn)}
+.st.exp{background:var(--danger-soft);color:var(--danger)}
+.prio{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;font-size:12px;font-weight:700;background:var(--surface-2);border:1px solid var(--border)}
+tr.first .prio{background:var(--android);color:#fff;border-color:var(--android)}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--surface-2)}
+/* phase */
+.phase-head{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;user-select:none}
+.phase-num{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:700;
+  background:var(--accent-soft);color:var(--accent);font-size:14px}
+.phase-num.done{background:var(--ok-soft);color:var(--ok)}
+.phase-title{flex:1;min-width:0}
+.phase-title .sub{font-size:13px;color:var(--muted)}
+.phase-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);white-space:nowrap}
+.phase-meta .bar{width:90px;height:6px}
+.chev{transition:transform .2s;color:var(--muted)}
+.phase.open .chev{transform:rotate(90deg)}
+.phase-body{display:none;padding:0 20px 18px;border-top:1px solid var(--border)}
+.phase.open .phase-body{display:block}
+.goal{background:var(--accent-soft);border-radius:8px;padding:9px 12px;margin:14px 0 4px;font-size:14px}
+ul.tasks{list-style:none;padding:0;margin:10px 0 0}
+ul.tasks li{border:1px solid var(--border);border-radius:9px;margin-bottom:8px;background:var(--surface)}
+.task-row{display:flex;gap:10px;align-items:flex-start;padding:9px 12px}
+.task-row input{margin-top:4px;width:17px;height:17px;accent-color:var(--ok);flex:none}
+.task-row label{flex:1;cursor:pointer}
+.task-row .more{background:none;border:none;color:var(--accent);font-size:12px;padding:2px 4px;white-space:nowrap}
+li.checked .task-row label{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--border)}
+.task-detail{display:none;padding:0 12px 12px 39px;font-size:14px}
+li.expanded .task-detail{display:block}
+.task-detail ul{margin:4px 0 8px;padding-left:18px}
+.tag{font-size:11px;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.tag.must{background:var(--warn-soft);color:var(--warn)}
+.tag.opt{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.tag.os{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.tag.os-android{background:var(--android-soft);color:var(--android);border:none}
+.tag.os-legacy{background:var(--danger-soft);color:var(--danger);border:none}
+.code{position:relative;margin:8px 0}
+.code .ctitle{font-size:12px;color:var(--muted);padding:5px 10px;background:var(--surface-2);
+  border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0}
+.code pre{margin:0;background:var(--code-bg);border:1px solid var(--border);border-radius:0 0 8px 8px;
+  padding:12px;overflow:auto;font-size:12.5px;line-height:1.5;max-height:460px}
+.code .copy{position:absolute;top:3px;right:6px;font-size:11px;padding:2px 8px}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:8px 12px;border-radius:0 8px 8px 0;font-size:14px;margin:10px 0}
+.risk{border-left:3px solid var(--danger);background:var(--danger-soft);padding:8px 12px;border-radius:0 8px 8px 0;font-size:14px;margin:10px 0}
+.tip{border-left:3px solid var(--ok);background:var(--ok-soft);padding:8px 12px;border-radius:0 8px 8px 0;font-size:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+.tbl-wrap{overflow-x:auto}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-top:10px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:2px solid transparent;padding:7px 12px;color:var(--muted);font-size:14px}
+.tabs button.on{color:var(--accent);border-color:var(--accent)}
+.tabpane{display:none;padding-top:8px}
+.tabpane.on{display:block}
+/* diagram */
+.diagram{width:100%;height:auto;display:block}
+.diagram .node rect{fill:var(--surface-2);stroke:var(--border);stroke-width:1.2;transition:stroke .15s}
+.diagram .node{cursor:pointer}
+.diagram .node:hover rect,.diagram .node.sel rect{stroke:var(--accent);stroke-width:2}
+.diagram .node.and rect{fill:var(--android-soft);stroke:var(--android)}
+.diagram .group{fill:none;stroke:var(--border);stroke-dasharray:5 4}
+.diagram text{fill:var(--text);font-size:13px;font-family:inherit}
+.diagram text.sm{fill:var(--muted);font-size:11px}
+.diagram text.gl{fill:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em}
+.diagram .edge{stroke:var(--muted);stroke-width:1.4;fill:none}
+.diagram .arrowhead{fill:var(--muted)}
+#nodeInfo{min-height:62px;margin-top:10px}
+.pipeline{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin-top:8px}
+.pstep{flex:1;min-width:120px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+  padding:9px 10px;cursor:pointer;font-size:13px}
+.pstep b{display:block;font-size:13px}
+.pstep span{color:var(--muted);font-size:12px}
+.pstep.sel{border-color:var(--accent);background:var(--accent-soft)}
+#pipeInfo{margin-top:10px}
+.gantt{display:grid;grid-template-columns:220px 1fr;gap:4px 10px;font-size:13px;align-items:center}
+.gantt .track{position:relative;height:16px;background:var(--surface-2);border-radius:5px}
+.gantt .track span{position:absolute;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.gantt .track span.and{background:var(--android)}
+.gantt .track span.leg{background:var(--danger);opacity:.7}
+.gantt .scale{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hidden{display:none!important}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  nav.side{position:static;max-height:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px}
+  .grid3{grid-template-columns:1fr}
+  .phase-meta .bar{display:none}
+  .gantt{grid-template-columns:120px 1fr}
+}
+@media (max-width:520px){
+  input[type=search]{width:100%}
+  .phase-head{padding:14px}
+  .phase-body{padding:0 14px 14px}
+  .task-detail{padding-left:12px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">KHOFace<small>Yuzni tanish ilovasi · reja v2</small></div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Umumiy progress</span><span id="totalTxt">0%</span></div>
+      <div class="bar"><span id="totalBar"></span></div>
+    </div>
+    <div class="grow"></div>
+    <input type="search" id="search" placeholder="Vazifalarni qidirish…" aria-label="Qidirish">
+    <button class="btn" id="toggleAll">Hammasini ochish</button>
+    <button class="btn" id="themeBtn" title="Mavzu">◐</button>
+    <button class="btn" id="resetBtn" title="Belgilarni tozalash">↺</button>
+  </div>
+  <div class="osbar" id="osbar">
+    <span class="lbl">Platforma bo'yicha:</span>
+    <button class="osbtn on" data-os="all">Hammasi</button>
+    <button class="osbtn" data-os="android">Android 7+</button>
+    <button class="osbtn" data-os="ios">iOS</button>
+    <button class="osbtn" data-os="windows">Windows</button>
+    <button class="osbtn" data-os="legacy">Eski versiyalar</button>
+    <button class="osbtn" data-os="macos">macOS</button>
+    <button class="osbtn" data-os="linux">Linux</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="side" id="sideNav" aria-label="Bosqichlar">
+    <h4>Umumiy</h4>
+    <a href="#overview"><span>Umumiy ko'rinish</span></a>
+    <a href="#platforms"><span>Platformalar matritsasi</span></a>
+    <a href="#architecture"><span>Arxitektura</span></a>
+    <a href="#stack"><span>Texnologiyalar</span></a>
+    <a href="#timeline"><span>Vaqt jadvali</span></a>
+    <h4>Bosqichlar</h4>
+    <div id="navPhases"></div>
+  </nav>
+
+  <main>
+    <section class="card card-pad" id="overview">
+      <h1>KHOFace: yuzni tanib oluvchi ilova rejasi</h1>
+      <p class="lead">Tauri 2.x, Vue 3.x va SQLite 3.x asosidagi offline yuz tanish ilovasi. <b>Asosiy platforma: Android (7.0 dan boshlab).</b> Keyingi navbatda Windows (7 dan boshlab), iOS, macOS va Linux. Barcha platformalarda Rust'da yozilgan bitta yadro ishlaydi, shuning uchun natijalar hamma joyda bir xil. Belgilagan vazifalaringiz shu brauzerda saqlanadi. Yuqoridagi tugmalar orqali faqat kerakli platforma vazifalarini ko'rish mumkin.</p>
+      <div class="grid3" style="margin-top:14px">
+        <div class="mini android"><b>Avval mobil, birinchi Android</b><span>Har bir bosqich avval Android'da, keyin desktop'da yakunlanadi. Minimal versiya: Android 7.0 (API 24), 32 va 64-bitli ARM qurilmalar.</span></div>
+        <div class="mini"><b>Eski qurilmalarda ham ishlaydi</b><span>Inference sof Rust'da yoziladi (tract), JS eski WebView'lar uchun alohida yig'iladi, Windows 7 uchun esa alohida build tayyorlanadi.</span></div>
+        <div class="mini"><b>Yangi yuz qo'shish</b><span>Ro'yxatga olish ustasi: 5–10 ta namuna, sifat nazorati va dublikat tekshiruvi. Ustani bir qo'l bilan telefonda boshqarish qulay.</span></div>
+      </div>
+      <div class="risk"><b>Muhim xavf.</b> Tauri 2 hujjatlarida Android 7 (API 24) qo'llab-quvvatlanadi deyilgan. Lekin ochiq nosozlik bor (<a href="https://github.com/tauri-apps/tauri/issues/8788" target="_blank" rel="noopener">tauri#8788</a>): Android 7 qurilmalarda ilova ishga tushganda yopilib qoladi. Sababi: Jackson kutubxonasi Android 8'da paydo bo'lgan <code>BootstrapMethodError</code> klassiga murojaat qiladi. Shuning uchun <b>0-bosqichda haqiqiy Android 7 qurilmada PoC majburiy</b>. Rejada aylanib o'tish yo'li ko'rsatilgan: Jackson'ning eski versiyasini majburlash.</div>
+      <div class="tip"><b>Joriy holat:</b> <code>frontend/</code> papkasida Tauri 2 + Vue 3 (TS, pnpm, Vite 8) skeleti bor. Android SDK <code>~/Android/Sdk</code> da o'rnatilgan, lekin <code>ANDROID_HOME</code> va <code>NDK_HOME</code> o'zgaruvchilari hali sozlanmagan. <code>src-tauri/gen/android</code> ham hali yaratilmagan.</div>
+    </section>
+
+    <section class="card card-pad" id="platforms">
+      <h2>Platformalar matritsasi</h2>
+      <p class="muted">Ustuvorlik tartibi va minimal versiyalar. Qatorni bossangiz, o'sha platforma vazifalari filtrlanadi.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>#</th><th>Platforma</th><th>Minimal versiya</th><th>Holat</th><th>Asosiy cheklov va yechim</th></tr></thead>
+        <tbody>
+          <tr class="first clickable" data-os="android"><td><span class="prio">1</span></td><td><b>Android</b></td><td>7.0 Nougat (API 24)<br><span class="muted">armeabi-v7a, arm64-v8a, x86, x86_64</span></td><td><span class="st risk">PoC kerak</span></td><td>Tauri'da standart <code>minSdkVersion = 24</code>. Android 7'da Jackson sababli yopilib qolish xavfi bor (#8788). WebView yangilanmagan bo'lishi mumkin (Chrome ~52), shuning uchun JS legacy rejimda yig'iladi. Kamera CameraX'da (API 21+). nokhwa Android'ni qo'llamaydi.</td></tr>
+          <tr class="clickable" data-os="windows"><td><span class="prio">2</span></td><td><b>Windows 10 / 11</b></td><td>Windows 10 1809+</td><td><span class="st ok">Rasmiy</span></td><td>WebView2 tizimda o'rnatilgan. Oddiy <code>x86_64-pc-windows-msvc</code> build.</td></tr>
+          <tr class="clickable" data-os="legacy"><td><span class="prio">3</span></td><td><b>Windows 7 SP1 / 8.1</b></td><td>7 SP1 (+ KB updates)</td><td><span class="st exp">Eksperimental</span></td><td>Tauri hujjati Windows 7'ni sanab o'tadi. Lekin Rust 1.78'dan boshlab standart target Windows 10+ talab qiladi. Yechim: alohida build, tier-3 <code>x86_64/i686-win7-windows-msvc</code> + nightly <code>-Z build-std</code>. WebView2 bu tizimlarda 109-versiyada to'xtagan: Fixed Version 109 yoki <code>embedBootstrapper</code> bilan beriladi. ONNX Runtime Win7'ni qo'llamaydi, shuning uchun bu yerda faqat tract ishlatiladi.</td></tr>
+          <tr class="clickable" data-os="ios"><td><span class="prio">4</span></td><td><b>iOS</b></td><td>15.0 (Tauri standarti)</td><td><span class="st ok">Rasmiy</span></td><td>Kamera AVFoundation orqali, Swift plugin bilan. Build uchun macOS va Xcode kerak.</td></tr>
+          <tr class="clickable" data-os="macos"><td><span class="prio">5</span></td><td><b>macOS</b></td><td>10.15 Catalina</td><td><span class="st ok">Rasmiy</span></td><td>Konfiguratsiya standarti 10.13. Rasmiy talab 10.15. 10.13–10.14 faqat sinovdan keyin. Universal build (arm64 + x64).</td></tr>
+          <tr class="clickable" data-os="linux"><td><span class="prio">6</span></td><td><b>Linux</b></td><td>Ubuntu 22.04 / Debian 12</td><td><span class="st ok">Rasmiy</span></td><td><code>webkit2gtk-4.1</code> kerak, shuning uchun Ubuntu 20.04 va undan eskilari qo'llanmaydi. AppImage 22.04'da yig'iladi (glibc ≥ 2.35).</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><b>“Barcha OS'da bir xil ishlash”ni qanday ta'minlaymiz:</b> 1) yuzni aniqlash, embedding, solishtirish va baza Rust'dagi bitta yadroda; 2) barcha platformalarda bitta inference dvigateli, tract (sof Rust, CPU); 3) bitta modellar to'plami; 4) CI'da bitta rasm har platformada bir xil vektor berishi tekshiriladi. Platformaga xos qismlar faqat kamera manbai va o'rnatuvchi paket.</div>
+    </section>
+
+    <section class="card card-pad" id="architecture">
+      <h2>Arxitektura</h2>
+      <p class="muted">Blokni bossangiz, vazifasi chiqadi. Yashil bloklar Android'ga xos.</p>
+      <svg class="diagram" viewBox="0 0 900 470" role="img" aria-label="KHOFace arxitekturasi">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+        <rect class="group" x="10" y="20" width="230" height="300" rx="12"/>
+        <text class="gl" x="26" y="44">FRONTEND · Webview</text>
+        <rect class="group" x="300" y="20" width="590" height="300" rx="12"/>
+        <text class="gl" x="316" y="44">RUST YADRO · barcha platformalar uchun bitta</text>
+        <rect class="group" x="10" y="340" width="880" height="118" rx="12"/>
+        <text class="gl" x="26" y="364">KAMERA MANBALARI · platformaga xos (FrameSource trait)</text>
+
+        <g class="node" data-k="ui"><rect x="28" y="62" width="194" height="62" rx="9"/><text x="42" y="88">Vue 3 sahifalari</text><text class="sm" x="42" y="107">mobil-birinchi layout</text></g>
+        <g class="node" data-k="store"><rect x="28" y="146" width="194" height="62" rx="9"/><text x="42" y="172">Pinia + composables</text><text class="sm" x="42" y="191">useCamera, usePersons</text></g>
+        <g class="node" data-k="canvas"><rect x="28" y="230" width="194" height="62" rx="9"/><text x="42" y="256">Canvas overlay</text><text class="sm" x="42" y="275">kadr + ramkalar</text></g>
+
+        <g class="node" data-k="ipc"><rect x="318" y="146" width="130" height="62" rx="9"/><text x="332" y="172">IPC qatlami</text><text class="sm" x="332" y="191">commands + Channel</text></g>
+        <g class="node" data-k="frames"><rect x="480" y="62" width="180" height="62" rx="9"/><text x="494" y="88">FrameBus</text><text class="sm" x="494" y="107">oxirgi kadr, backpressure</text></g>
+        <g class="node" data-k="engine"><rect x="480" y="146" width="180" height="62" rx="9"/><text x="494" y="172">FaceEngine</text><text class="sm" x="494" y="191">tract: detect·align·embed</text></g>
+        <g class="node" data-k="matcher"><rect x="480" y="230" width="180" height="62" rx="9"/><text x="494" y="256">Matcher</text><text class="sm" x="494" y="275">xotiradagi indeks, cosine</text></g>
+        <g class="node" data-k="models"><rect x="690" y="62" width="182" height="62" rx="9"/><text x="704" y="88">ONNX modellar</text><text class="sm" x="704" y="107">YuNet + SFace (int8/fp32)</text></g>
+        <g class="node" data-k="repo"><rect x="690" y="146" width="182" height="62" rx="9"/><text x="704" y="172">Repository</text><text class="sm" x="704" y="191">rusqlite (bundled)</text></g>
+        <g class="node" data-k="db"><rect x="690" y="230" width="182" height="62" rx="9"/><text x="704" y="256">SQLite fayl</text><text class="sm" x="704" y="275">app_data_dir/khoface.db</text></g>
+
+        <g class="node and" data-k="camx"><rect x="28" y="380" width="200" height="62" rx="9"/><text x="42" y="406">Android: CameraX</text><text class="sm" x="42" y="425">Kotlin plugin → JNI</text></g>
+        <g class="node" data-k="avf"><rect x="246" y="380" width="200" height="62" rx="9"/><text x="260" y="406">iOS: AVFoundation</text><text class="sm" x="260" y="425">Swift plugin → FFI</text></g>
+        <g class="node" data-k="nokhwa"><rect x="464" y="380" width="200" height="62" rx="9"/><text x="478" y="406">Desktop: nokhwa</text><text class="sm" x="478" y="425">MSMF · AVF · V4L2</text></g>
+        <g class="node" data-k="gum"><rect x="682" y="380" width="190" height="62" rx="9"/><text x="696" y="406">Zaxira: getUserMedia</text><text class="sm" x="696" y="425">WebView → invoke</text></g>
+
+        <path class="edge" d="M125 124 V146" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <path class="edge" d="M125 208 V230" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <path class="edge" d="M222 177 H318" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <path class="edge" d="M448 177 H480" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <path class="edge" d="M570 124 V146" marker-end="url(#ah)"/>
+        <path class="edge" d="M570 208 V230" marker-end="url(#ah)"/>
+        <path class="edge" d="M690 93 H660" marker-end="url(#ah)"/>
+        <path class="edge" d="M660 261 H690" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <path class="edge" d="M781 208 V230" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <path class="edge" d="M128 380 C128 340 470 340 500 124" marker-end="url(#ah)"/>
+        <path class="edge" d="M346 380 C346 350 500 340 530 124" marker-end="url(#ah)"/>
+        <path class="edge" d="M564 380 V340 L600 124" marker-end="url(#ah)"/>
+        <path class="edge" d="M777 380 C777 340 650 330 630 124" marker-end="url(#ah)"/>
+      </svg>
+      <div id="nodeInfo" class="mini"><span>Blokni tanlang…</span></div>
+
+      <h3>Yuzni tanish konveyeri</h3>
+      <div class="pipeline" id="pipeline"></div>
+      <div id="pipeInfo" class="mini"></div>
+    </section>
+
+    <section class="card card-pad" id="stack">
+      <h2>Texnologiyalar to'plami</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Qatlam</th><th>Tanlov</th><th>Nega aynan shu (eski versiyalar ham hisobga olingan)</th></tr></thead>
+        <tbody>
+          <tr><td>Qobiq</td><td>Tauri 2.x (Android, iOS, desktop)</td><td>Bitta kod bazasi. Android minSdk 24 standart.</td></tr>
+          <tr><td>UI</td><td>Vue 3 + TS + Vite, Pinia, Vue Router, vue-i18n</td><td>Vue 3 uchun ES2016 va Proxy kerak (Chrome 49+). Android 7'dagi eski WebView'da ham ishlaydi.</td></tr>
+          <tr><td>Eski WebView uchun</td><td><code>@vitejs/plugin-legacy</code>, PostCSS (autoprefixer)</td><td>Yangilanmagan Android 7 WebView (Chrome 51–55) uchun alohida legacy bundle va polyfill'lar.</td></tr>
+          <tr><td>UI komponentlar</td><td>Yengil kutubxona yoki o'zimiz yozgan komponentlar (Vant 4 mobil uchun mos)</td><td>Mobil-birinchi. Og'ir kutubxonalar zaif telefonlarda sekinlashadi.</td></tr>
+          <tr><td>Ma'lumotlar bazasi</td><td>SQLite 3.x, <code>rusqlite</code> + <code>bundled</code></td><td>NDK, MSVC va clang bilan kompilyatsiya bo'ladi. Har yerda bir xil SQLite versiyasi.</td></tr>
+          <tr><td>Inference (asosiy)</td><td><b><code>tract-onnx</code></b> (sof Rust)</td><td>Tashqi native kutubxona yo'q. armv7, aarch64, x86 va win7 targetlarida ishlaydi. Natija hamma platformada bir xil.</td></tr>
+          <tr><td>Inference (ixtiyoriy)</td><td><code>ort</code> (ONNX Runtime)</td><td>Zamonaviy qurilmalarda tezroq. Win7'da ishlamaydi. Faqat feature flag bilan yoqiladi.</td></tr>
+          <tr><td>Modellar</td><td>YuNet (MIT) + SFace (Apache-2.0)</td><td>Kichik hajm (≈0.3 MB + ≈37 MB, int8 varianti ≈10 MB). Tijoriy foydalanish uchun litsenziya xavfsiz.</td></tr>
+          <tr><td>Kamera</td><td>Android: CameraX · iOS: AVFoundation · Desktop: <code>nokhwa</code></td><td>CameraX API 21+ da ishlaydi, Android 7 bilan mos.</td></tr>
+          <tr><td>Rasm ishlash</td><td><code>image</code>, <code>imageproc</code></td><td>Sof Rust. YUV→RGB, affine, JPEG.</td></tr>
+          <tr><td>CI/CD</td><td>GitHub Actions: android, windows, win7, macos, linux, ios</td><td>Har bir platforma uchun alohida job.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="card card-pad" id="timeline">
+      <h2>Taxminiy vaqt jadvali</h2>
+      <p class="muted">Bitta dasturchi uchun haftalarda. Android oqimi birinchi bo'lib yakunlanadi, desktop va eski versiyalar keyin parallel olib boriladi.</p>
+      <div class="gantt" id="gantt"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Umumiy</span><span><i style="background:var(--android)"></i>Android ustuvor</span><span><i style="background:var(--danger);opacity:.7"></i>Eski versiyalar / ixtiyoriy</span></div>
+    </section>
+
+    <div id="phases"></div>
+  </main>
+</div>
+
+<script>
+/* ---------- Ma'lumotlar ---------- */
+const NODES = {
+  ui:{t:"Vue 3 sahifalari",d:"Live, Shaxslar, Qo'shish ustasi, Jurnal, Sozlamalar. Mobil-birinchi: pastki navigatsiya, katta tugmalar, portret rejim. Desktop'da yon menyuga aylanadi."},
+  store:{t:"Pinia + composables",d:"useCamera() Rust kanalini ochadi va kadrlarni qabul qiladi. usePersons() CRUD. Holat: shaxslar, chegara, faol kamera."},
+  canvas:{t:"Canvas overlay",d:"Rustdan kelgan JPEG kadr va yuz ramkalari chiziladi. Zaif telefonlarda kadr tezligi avtomatik pasaytiriladi."},
+  ipc:{t:"IPC qatlami",d:"#[tauri::command] buyruqlari va tauri::ipc::Channel. Kamera manbai qaysi platformada bo'lishidan qat'i nazar, frontend bilan aloqa bir xil."},
+  frames:{t:"FrameBus",d:"Barcha kamera manbalari kadrni shu yerga yozadi (RGB yoki YUV). Faqat oxirgi kadr saqlanadi: sekin qurilmada navbat to'planmaydi va kechikish o'smaydi."},
+  engine:{t:"FaceEngine",d:"tract-onnx: YuNet bilan aniqlash, 5 nuqta bo'yicha tekislash, SFace embedding, L2-normallash. Kod barcha platformalarda bir xil."},
+  matcher:{t:"Matcher",d:"Embeddinglar ishga tushishda xotiraga yuklanadi. Cosine = nuqta ko'paytma. Eski telefonda ham 10k yuz bo'yicha qidiruv bir necha millisekund oladi."},
+  models:{t:"ONNX modellar",d:"Desktop'da bundle.resources orqali, Android'da APK assets ichida (Tauri resource sifatida). Zaif qurilmalar uchun int8 varianti."},
+  repo:{t:"Repository",d:"rusqlite: migratsiyalar, CRUD, tranzaksiyalar. WAL rejimi. Android'da baza ilovaning ichki xotirasida, boshqa ilovalar kira olmaydi."},
+  db:{t:"SQLite fayl",d:"Android: /data/data/kho.face/… · Windows: %APPDATA%\\kho.face · macOS: ~/Library/Application Support/kho.face · Linux: ~/.local/share/kho.face"},
+  camx:{t:"Android: CameraX (Kotlin plugin)",d:"ImageAnalysis (STRATEGY_KEEP_ONLY_LATEST, 640×480, YUV_420_888) kadrlarni JNI orqali Rust'ga uzatadi. CameraX API 21+ da ishlaydi, Android 7 bilan mos. CAMERA ruxsati runtime'da so'raladi."},
+  avf:{t:"iOS: AVFoundation (Swift plugin)",d:"AVCaptureVideoDataOutput, BGRA kadrlar C-ABI orqali Rust'ga uzatiladi. Info.plist'da NSCameraUsageDescription bo'lishi shart."},
+  nokhwa:{t:"Desktop: nokhwa",d:"Windows (Media Foundation, Win7'da ham bor), macOS (AVFoundation), Linux (V4L2). Kadrlarni alohida thread o'qiydi."},
+  gum:{t:"Zaxira: getUserMedia",d:"Native manba ishlamasa yoki PoC bosqichida: WebView kamerasi orqali kadr olinib, invoke bilan Rust'ga yuboriladi. Sekinroq, lekin hamma joyda tez ishga tushadi."}
+};
+const PIPE = [
+  {k:"Kadr",s:"YUV/RGB → 640×480",d:"Android'da YUV_420_888 kadr Rust'da RGB'ga o'giriladi va sensor burchagiga (rotationDegrees) qarab buriladi. Zaif qurilmalarda aniqlash 320 px kenglikdagi nusxada bajariladi."},
+  {k:"Aniqlash",s:"YuNet → bbox + 5 nuqta",d:"score ≈ 0.8, NMS IoU 0.3. 60–80 px dan kichik yuzlar rad etiladi."},
+  {k:"Tekislash",s:"112×112, affine",d:"5 nuqta Umeyama similarity transform bilan ArcFace shabloniga moslanadi. Aniqlikka eng katta ta'sir qiladigan bosqich."},
+  {k:"Embedding",s:"SFace 128-d",d:"tract'da ishlaydi. Natija L2-normallanadi. Model fayli va kod hamma joyda bir xil bo'lgani uchun vektorlar ham bir xil chiqadi."},
+  {k:"Solishtirish",s:"cosine ≥ chegara",d:"SFace uchun boshlang'ich qiymat ≈ 0.36. Aniq chegara o'z test to'plamingizda ROC bo'yicha tanlanadi."},
+  {k:"Barqarorlash",s:"3–5 kadr ovoz",d:"IoU asosida trekking va ko'pchilik ovozi. Ism miltillamaydi. Jurnalga takroriy yozuvlar tushmaydi."}
+];
+
+const C = {};
+C.envAndroid = String.raw`# Android (birinchi navbatda) — Linux/macOS/Windows hostda
+# 1) JDK 17 va Android Studio (yoki cmdline-tools)
+sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+
+# 2) ~/.bashrc (sizda SDK ~/Android/Sdk da bor)
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export ANDROID_HOME="$HOME/Android/Sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
+export PATH="$PATH:$ANDROID_HOME/platform-tools"
+
+# 3) Rust targetlari (32-bit eski telefonlar uchun armv7 shart)
+rustup target add aarch64-linux-android armv7-linux-androideabi \
+                  i686-linux-android x86_64-linux-android
+
+# 4) Emulator: Android 7.0 (API 24) va Android 14 obrazlari
+sdkmanager "system-images;android-24;google_apis;x86_64" "emulator"
+avdmanager create avd -n api24 -k "system-images;android-24;google_apis;x86_64"`;
+C.depsLinux = String.raw`sudo apt update
+sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev \
+  clang libclang-dev libv4l-dev pkg-config openjdk-17-jdk
+sudo usermod -aG video $USER
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+corepack enable && corepack prepare pnpm@latest --activate`;
+C.depsMac = String.raw`xcode-select --install          # iOS uchun to'liq Xcode kerak
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+rustup target add aarch64-apple-darwin x86_64-apple-darwin \
+                  aarch64-apple-ios aarch64-apple-ios-sim
+brew install node cocoapods && corepack enable`;
+C.depsWin = String.raw`# Visual Studio Build Tools: "Desktop development with C++"
+winget install Rustlang.Rustup
+winget install OpenJS.NodeJS.LTS
+corepack enable
+rustup default stable-msvc
+rustup target add i686-pc-windows-msvc     # 32-bit Windows uchun`;
+C.depsWin7 = String.raw`# Windows 7/8.1 build (eksperimental): tier-3 target, nightly + build-std
+rustup toolchain install nightly --component rust-src
+# 64-bit va 32-bit
+#   x86_64-win7-windows-msvc
+#   i686-win7-windows-msvc
+# Build Windows 10/11 mashinada bajariladi, natijaviy .exe Win7'da ishga tushiriladi.
+$env:RUSTUP_TOOLCHAIN = "nightly"
+pnpm tauri build --target x86_64-win7-windows-msvc -- -Z build-std=std,panic_abort`;
+C.androidInit = String.raw`cd frontend
+pnpm tauri android init            # src-tauri/gen/android yaratiladi
+pnpm tauri android dev             # emulator yoki USB qurilmada
+pnpm tauri android build --apk --target aarch64 armv7 --split-per-abi`;
+C.jackson = String.raw`// src-tauri/gen/android/app/build.gradle.kts  — Android 7 (API 24/25) crash uchun aylanma yo'l
+// Sabab: yangi Jackson (2.14+) Android 8+ klasslarini talab qiladi (tauri#8788).
+// PoC'da haqiqiy Android 7 qurilmada tekshiring!
+android {
+    defaultConfig { minSdk = 24 }
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+}
+configurations.all {
+    resolutionStrategy {
+        force("com.fasterxml.jackson.core:jackson-databind:2.13.5")
+        force("com.fasterxml.jackson.core:jackson-core:2.13.5")
+        force("com.fasterxml.jackson.core:jackson-annotations:2.13.5")
+        force("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
+    }
+}
+// Eslatma: gen/android qayta generatsiya qilinsa o'zgarishlar yo'qolishi mumkin —
+// patch faylini repoda saqlang yoki gen/android'ni git'ga qo'shing.`;
+C.vite = String.raw`// frontend/vite.config.ts — eski WebView'lar uchun
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import legacy from '@vitejs/plugin-legacy'
+
+const platform = process.env.TAURI_ENV_PLATFORM   // 'android' | 'windows' | 'ios' | ...
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    legacy({
+      // Android 7 dagi yangilanmagan WebView (≈Chrome 52), Win7 WebView2 109, iOS 15 Safari
+      targets: ['chrome >= 52', 'safari >= 13', 'edge >= 79'],
+      modernPolyfills: true,
+    }),
+  ],
+  build: {
+    target: platform === 'windows' ? 'chrome105' : 'es2015',
+    minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
+    sourcemap: !!process.env.TAURI_ENV_DEBUG,
+  },
+  // ... mavjud server/clearScreen sozlamalari o'zgarishsiz qoladi
+})
+// CSS: flex 'gap' (Chrome 84), aspect-ratio (88), inset, :is(), :has(), container queries
+// ishlatmang yoki zaxira variant yozing. package.json: "browserslist": ["chrome >= 52", "safari >= 13"]`;
+C.frontDeps = String.raw`cd frontend
+pnpm add pinia vue-router vue-i18n
+pnpm add vant                       # mobil UI (ixtiyoriy)
+pnpm add -D @vitejs/plugin-legacy terser autoprefixer postcss vitest @vue/test-utils`;
+C.cargo = String.raw`# frontend/src-tauri/Cargo.toml
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+anyhow = "1"
+parking_lot = "0.12"
+uuid = { version = "1", features = ["v4", "serde"] }
+bytemuck = "1"
+base64 = "0.22"
+rusqlite = { version = "0.32", features = ["bundled"] }
+tract-onnx = "0.21"                       # asosiy inference: sof Rust, barcha targetlar
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+imageproc = { version = "0.25", default-features = false }
+ort = { version = "2.0.0-rc.10", optional = true }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+nokhwa = { version = "0.10", features = ["input-native", "output-threaded"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+
+[features]
+default = []
+ort-backend = ["dep:ort"]                 # faqat Win10+/Android 8+/macOS uchun
+# Versiyalarni crates.io dagi joriy qiymatlar bilan tekshiring`;
+C.tree = String.raw`KHOFace/
+└── frontend/
+    ├── src/                         # Vue 3 (mobil-birinchi)
+    │   ├── router/  stores/  composables/  views/  components/  i18n/
+    │   └── platform.ts              # platform() -> 'android' | 'ios' | 'windows' ...
+    └── src-tauri/
+        ├── src/
+        │   ├── lib.rs  error.rs  state.rs
+        │   ├── commands/            # persons, enroll, recognize, camera, settings
+        │   ├── db/                  # mod.rs, migrations/*.sql, repo.rs
+        │   ├── face/                # detector, align, embedder, matcher, quality, backend.rs
+        │   └── camera/
+        │       ├── mod.rs           # trait FrameSource + FrameBus
+        │       ├── desktop.rs       # #[cfg(desktop)]  nokhwa
+        │       ├── android.rs       # #[cfg(target_os="android")] JNI qabul qiluvchi
+        │       └── ios.rs           # #[cfg(target_os="ios")]
+        ├── plugins/camera/          # tauri-plugin-khoface-camera
+        │   ├── android/  (Kotlin, CameraX)
+        │   └── ios/      (Swift, AVFoundation)
+        ├── resources/models/        # yunet.onnx, sface.onnx, sface_int8.onnx
+        ├── gen/android/  gen/apple/ # tauri android/ios init natijasi
+        └── tauri.conf.json`;
+C.schema = String.raw`-- src-tauri/src/db/migrations/001_init.sql
+CREATE TABLE IF NOT EXISTS persons (
+  id          INTEGER PRIMARY KEY,
+  uuid        TEXT NOT NULL UNIQUE,
+  full_name   TEXT NOT NULL,
+  external_id TEXT,
+  note        TEXT,
+  avatar      BLOB,
+  consent_at  TEXT,                  -- rozilik sanasi
+  is_active   INTEGER NOT NULL DEFAULT 1,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS face_embeddings (
+  id         INTEGER PRIMARY KEY,
+  person_id  INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+  model      TEXT NOT NULL,          -- 'sface-2021dec'
+  dim        INTEGER NOT NULL,
+  vector     BLOB NOT NULL,          -- f32 LE, L2-normallangan
+  quality    REAL,
+  thumb      BLOB,
+  device     TEXT,                   -- 'android-24' | 'windows-7' ... (statistika uchun)
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_emb_person ON face_embeddings(person_id);
+CREATE TABLE IF NOT EXISTS recognition_logs (
+  id         INTEGER PRIMARY KEY,
+  person_id  INTEGER REFERENCES persons(id) ON DELETE SET NULL,
+  score      REAL NOT NULL,
+  matched    INTEGER NOT NULL,
+  source     TEXT NOT NULL,
+  snapshot   BLOB,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_logs_time ON recognition_logs(created_at);
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);`;
+C.db = String.raw`// src-tauri/src/db/mod.rs
+use rusqlite::Connection;
+const MIGRATIONS: &[&str] = &[ include_str!("migrations/001_init.sql") ];
+
+pub fn open(path: &std::path::Path) -> rusqlite::Result<Connection> {
+    let mut conn = Connection::open(path)?;
+    conn.pragma_update(None, "journal_mode", "WAL")?;
+    conn.pragma_update(None, "foreign_keys", "ON")?;
+    conn.pragma_update(None, "synchronous", "NORMAL")?;
+    let cur: usize = conn.pragma_query_value(None, "user_version", |r| r.get(0))?;
+    for (i, sql) in MIGRATIONS.iter().enumerate().skip(cur) {
+        let tx = conn.transaction()?;
+        tx.execute_batch(sql)?;
+        tx.pragma_update(None, "user_version", i + 1)?;
+        tx.commit()?;
+    }
+    Ok(conn)
+}
+pub fn vec_to_blob(v: &[f32]) -> Vec<u8> { bytemuck::cast_slice(v).to_vec() }
+pub fn blob_to_vec(b: &[u8]) -> Vec<f32> { bytemuck::pod_collect_to_vec(b) }`;
+C.lib = String.raw`// src-tauri/src/lib.rs
+use tauri::{Manager, path::BaseDirectory};
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            let dir = app.path().app_data_dir()?;           // Android'da ham to'g'ri ishlaydi
+            std::fs::create_dir_all(&dir)?;
+            let conn = db::open(&dir.join("khoface.db"))?;
+            let det = app.path().resolve("resources/models/yunet.onnx", BaseDirectory::Resource)?;
+            let emb = app.path().resolve("resources/models/sface.onnx", BaseDirectory::Resource)?;
+            let engine = face::FaceEngine::load(&det, &emb)?;   // Android'da resurs avval
+            let matcher = face::Matcher::from_db(&conn, engine.model_id())?; // app_cache'ga nusxalanadi
+            app.manage(state::AppState::new(conn, engine, matcher));
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::persons::list_persons, commands::persons::delete_person,
+            commands::enroll::enroll_capture_sample, commands::enroll::enroll_commit,
+            commands::enroll::enroll_from_images, commands::recognize::recognize_image,
+            commands::camera::start_stream, commands::camera::stop_stream,
+            commands::camera::push_frame,          // getUserMedia zaxira yo'li
+            commands::settings::get_settings, commands::settings::set_settings,
+        ])
+        .run(tauri::generate_context!())
+        .expect("KHOFace ishga tushmadi");
+}`;
+C.frameSource = String.raw`// src-tauri/src/camera/mod.rs
+pub enum PixelData { Rgb8(Vec<u8>), Yuv420 { y: Vec<u8>, u: Vec<u8>, v: Vec<u8>, y_stride: usize, uv_stride: usize, uv_pixel_stride: usize } }
+pub struct Frame { pub width: u32, pub height: u32, pub rotation: u16, pub data: PixelData, pub ts_ms: u64 }
+
+pub trait FrameSource: Send {
+    fn list(&self) -> Vec<CameraInfo>;
+    fn start(&mut self, id: &str, bus: FrameBus) -> Result<(), crate::error::AppError>;
+    fn stop(&mut self);
+}
+
+/// Faqat oxirgi kadr saqlanadi — sekin qurilmada navbat to'planmaydi
+#[derive(Clone, Default)]
+pub struct FrameBus(std::sync::Arc<parking_lot::Mutex<Option<Frame>>>);
+impl FrameBus {
+    pub fn put(&self, f: Frame) { *self.0.lock() = Some(f); }
+    pub fn take(&self) -> Option<Frame> { self.0.lock().take() }
+}
+
+#[cfg(desktop)] mod desktop;
+#[cfg(target_os = "android")] pub mod android;
+#[cfg(target_os = "ios")] pub mod ios;`;
+C.kotlin = String.raw`// plugins/camera/android/src/main/java/CameraPlugin.kt (soddalashtirilgan)
+@TauriPlugin(permissions = [Permission(strings = [Manifest.permission.CAMERA], alias = "camera")])
+class CameraPlugin(private val activity: Activity) : Plugin(activity) {
+    private external fun nativeOnFrame(y: ByteBuffer, u: ByteBuffer, v: ByteBuffer,
+        w: Int, h: Int, yStride: Int, uvStride: Int, uvPixStride: Int, rotation: Int)
+
+    @Command
+    fun start(invoke: Invoke) {
+        val providerFuture = ProcessCameraProvider.getInstance(activity)
+        providerFuture.addListener({
+            val analysis = ImageAnalysis.Builder()
+                .setTargetResolution(Size(640, 480))
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+            analysis.setAnalyzer(Executors.newSingleThreadExecutor()) { img ->
+                val p = img.planes
+                nativeOnFrame(p[0].buffer, p[1].buffer, p[2].buffer, img.width, img.height,
+                    p[0].rowStride, p[1].rowStride, p[1].pixelStride, img.imageInfo.rotationDegrees)
+                img.close()
+            }
+            providerFuture.get().bindToLifecycle(activity as LifecycleOwner,
+                CameraSelector.DEFAULT_FRONT_CAMERA, analysis)
+            invoke.resolve()
+        }, ContextCompat.getMainExecutor(activity))
+    }
+}
+// build.gradle: implementation("androidx.camera:camera-camera2:1.3.4") + camera-lifecycle
+// CameraX 1.3.x minSdk 21 — Android 7 bilan mos (yangi versiyalarning minSdk'ini tekshiring)`;
+C.jni = String.raw`// src-tauri/src/camera/android.rs — Kotlin'dan kadr qabul qilish
+use jni::{JNIEnv, objects::{JClass, JByteBuffer}, sys::jint};
+
+#[no_mangle]
+pub extern "system" fn Java_kho_face_camera_CameraPlugin_nativeOnFrame(
+    env: JNIEnv, _cls: JClass,
+    y: JByteBuffer, u: JByteBuffer, v: JByteBuffer,
+    w: jint, h: jint, y_stride: jint, uv_stride: jint, uv_pix: jint, rot: jint,
+) {
+    let read = |b: &JByteBuffer| unsafe {
+        let ptr = env.get_direct_buffer_address(b).unwrap();
+        let len = env.get_direct_buffer_capacity(b).unwrap();
+        std::slice::from_raw_parts(ptr, len).to_vec()
+    };
+    let frame = super::Frame { width: w as u32, height: h as u32, rotation: rot as u16, ts_ms: now_ms(),
+        data: super::PixelData::Yuv420 { y: read(&y), u: read(&u), v: read(&v),
+            y_stride: y_stride as usize, uv_stride: uv_stride as usize, uv_pixel_stride: uv_pix as usize } };
+    if let Some(bus) = GLOBAL_BUS.get() { bus.put(frame); }
+}
+// Eslatma: JNI funksiya nomi Kotlin paket + klass nomiga aniq mos bo'lishi kerak.`;
+C.manifest = String.raw`<!-- gen/android/app/src/main/AndroidManifest.xml -->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
+<!-- iOS: gen/apple/.../Info.plist -->
+<key>NSCameraUsageDescription</key>
+<string>KHOFace yuzlarni tanish uchun kameradan foydalanadi.</string>`;
+C.useCamera = String.raw`// src/composables/useCamera.ts
+import { ref, onBeforeUnmount } from 'vue'
+import { invoke, Channel } from '@tauri-apps/api/core'
+
+export interface FaceBox { x: number; y: number; w: number; h: number; name?: string; score: number }
+export interface FramePayload { jpegB64: string; width: number; height: number; faces: FaceBox[]; fps: number }
+
+export function useCamera() {
+  const frame = ref<FramePayload | null>(null)
+  const running = ref(false)
+  async function start(cameraId = 'front') {
+    const ch = new Channel<FramePayload>()
+    ch.onmessage = function (msg) { frame.value = msg }
+    await invoke('start_stream', { cameraId: cameraId, onFrame: ch })   // Android, iOS, desktop — bir xil
+    running.value = true
+  }
+  async function stop() { await invoke('stop_stream'); running.value = false }
+  onBeforeUnmount(function () { if (running.value) stop() })
+  return { frame, running, start, stop }
+}`;
+C.tract = String.raw`// src-tauri/src/face/embedder.rs — tract (sof Rust, barcha platformalar)
+use tract_onnx::prelude::*;
+
+type Model = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
+pub struct Embedder { model: Model, pub dim: usize }
+
+impl Embedder {
+    pub fn load(path: &std::path::Path) -> TractResult<Self> {
+        let model = tract_onnx::onnx()
+            .model_for_path(path)?
+            .with_input_fact(0, f32::fact([1, 3, 112, 112]).into())?
+            .into_optimized()?
+            .into_runnable()?;
+        Ok(Self { model, dim: 128 })
+    }
+    pub fn embed(&self, aligned: &image::RgbImage) -> TractResult<Vec<f32>> {
+        let t: Tensor = tract_ndarray::Array4::from_shape_fn((1, 3, 112, 112), |(_, c, y, x)| {
+            aligned.get_pixel(x as u32, y as u32)[c] as f32     // modelga mos normallash!
+        }).into();
+        let out = self.model.run(tvec!(t.into()))?;
+        let v: Vec<f32> = out[0].to_array_view::<f32>()?.iter().copied().collect();
+        Ok(l2_normalize(v))
+    }
+}
+pub fn l2_normalize(mut v: Vec<f32>) -> Vec<f32> {
+    let n = v.iter().map(|x| x * x).sum::<f32>().sqrt().max(1e-12);
+    v.iter_mut().for_each(|x| *x /= n); v
+}`;
+C.align = String.raw`// src-tauri/src/face/align.rs — ArcFace 112x112 shabloni
+pub const REF_5PTS: [(f32, f32); 5] = [
+    (38.2946, 51.6963), (73.5318, 51.5014), (56.0252, 71.7366),
+    (41.5493, 92.3655), (70.7299, 92.2041),
+];
+// 1) landmarks -> REF_5PTS uchun Umeyama similarity transform (2x3)
+// 2) imageproc warp (bilinear) -> 112x112 -> Embedder::embed()`;
+C.matcher = String.raw`// src-tauri/src/face/matcher.rs
+pub struct Entry { pub person_id: i64, pub vector: Vec<f32> }
+pub struct Matcher { entries: Vec<Entry>, pub threshold: f32 }
+#[derive(serde::Serialize)] pub struct Match { pub person_id: i64, pub score: f32 }
+
+impl Matcher {
+    pub fn best(&self, q: &[f32]) -> Option<Match> {
+        let mut best: Option<Match> = None;
+        for e in &self.entries {
+            let s: f32 = e.vector.iter().zip(q).map(|(a, b)| a * b).sum();
+            if best.as_ref().map_or(true, |b| s > b.score) { best = Some(Match { person_id: e.person_id, score: s }); }
+        }
+        best.filter(|m| m.score >= self.threshold)
+    }
+}`;
+C.quality = String.raw`// src-tauri/src/face/quality.rs
+pub fn check(face_w: f32, det: f32, blur_var: f32, yaw_deg: f32) -> Vec<&'static str> {
+    let mut r = vec![];
+    if face_w < 80.0          { r.push("Yuz juda kichik — yaqinroq keling"); }
+    if det < 0.85             { r.push("Yuz aniq ko'rinmayapti"); }
+    if blur_var < 60.0        { r.push("Rasm xira — qimirlamang"); }
+    if yaw_deg.abs() > 30.0   { r.push("Boshingizni to'g'ri tuting"); }
+    r
+}`;
+C.conf = String.raw`// src-tauri/tauri.conf.json (qismlar)
+{
+  "productName": "KHOFace",
+  "identifier": "kho.face",
+  "app": {
+    "windows": [{ "title": "KHOFace", "width": 1280, "height": 800, "minWidth": 360, "minHeight": 600 }],
+    "security": { "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'" }
+  },
+  "bundle": {
+    "targets": "all",
+    "resources": { "resources/models/*": "resources/models/" },
+    "android": { "minSdkVersion": 24 },
+    "iOS": { "minimumSystemVersion": "15.0" },
+    "macOS": { "minimumSystemVersion": "10.15" },
+    "windows": {
+      "webviewInstallMode": { "type": "embedBootstrapper" }
+      // Win7 alohida build: { "type": "fixedRuntime", "path": "./WebView2-109-x64/" }
+    }
+  }
+}`;
+C.win7conf = String.raw`// src-tauri/tauri.win7.conf.json — faqat Win7/8.1 build uchun (merge qilinadi)
+{
+  "bundle": {
+    "windows": {
+      "webviewInstallMode": {
+        "type": "fixedRuntime",
+        "path": "./Microsoft.WebView2.FixedVersionRuntime.109.0.1518.78.x64/"
+      }
+    }
+  }
+}
+// Build:
+//   pnpm tauri build --config src-tauri/tauri.win7.conf.json \
+//       --target x86_64-win7-windows-msvc -- -Z build-std=std,panic_abort
+// Win7 mijozda kerakli yangilanishlar: SP1, KB4474419 (SHA-2 imzo), KB3140245 (TLS 1.2),
+// KB2999226 (UCRT; staticVCRuntime=true bo'lsa shart emas), KB2533623.`;
+C.ci = String.raw`# .github/workflows/release.yml (qisqartirilgan)
+name: release
+on: { push: { tags: ['v*'] } }
+jobs:
+  android:                                     # 1-o'rin
+    runs-on: ubuntu-22.04
+    defaults: { run: { working-directory: frontend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "ndk;27.2.12479018"
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: 'aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android' }
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri android build --aab --apk --split-per-abi
+        env: { NDK_HOME: ${'$'}{{ env.ANDROID_HOME }}/ndk/27.2.12479018 }
+      - uses: actions/upload-artifact@v4
+        with: { name: android, path: frontend/src-tauri/gen/android/app/build/outputs/ }
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, args: '' }
+          - { os: windows-latest, args: '--target i686-pc-windows-msvc' }
+          - { os: macos-latest,   args: '--target universal-apple-darwin' }
+          - { os: ubuntu-22.04,   args: '' }
+    runs-on: ${'$'}{{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      # ... setup (pnpm, rust, linux deps) ...
+      - uses: tauri-apps/tauri-action@v0
+        with: { projectPath: frontend, args: ${'$'}{{ matrix.args }}, releaseDraft: true }
+
+  windows7:                                    # eksperimental
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with: { components: rust-src }
+      # ... WebView2 Fixed 109 ni yuklab olish ...
+      - run: pnpm tauri build --config src-tauri/tauri.win7.conf.json --target x86_64-win7-windows-msvc -- -Z build-std=std,panic_abort
+        working-directory: frontend`.replace(/\$\{'\$'\}/g, '$');
+C.test = String.raw`// src-tauri/tests/determinism.rs — platformalar o'rtasida bir xillik
+#[test]
+fn same_embedding_on_every_platform() {
+    let engine = khoface::face::FaceEngine::load_for_tests();
+    let img = image::open("tests/fixtures/person_a_1.jpg").unwrap().to_rgb8();
+    let v = engine.embed_largest_face(&img).unwrap();
+    let golden: Vec<f32> = serde_json::from_str(include_str!("fixtures/person_a_1.golden.json")).unwrap();
+    let cos: f32 = v.iter().zip(&golden).map(|(a, b)| a * b).sum();
+    assert!(cos > 0.999, "embedding platformaga qarab farq qilyapti: cos={cos}");
+}
+// Android'da: cargo-ndk + adb orqali emulator API 24 da ishga tushiriladi,
+// yoki ilova ichidagi "Diagnostika" ekrani orqali shu test bajariladi.`;
+
+const PHASES = [
+ {id:"p0",title:"Talablar, platformalar va PoC",sub:"Eng katta xavflarni birinchi navbatda tekshirish",w:[0,1.5],k:"and",
+  goal:"Qamrovni yozma qayd etish va 1–1,5 hafta ichida eng xavfli taxminlarni haqiqiy qurilmalarda tekshirish: Android 7 va Windows 7.",
+  tasks:[
+   {t:"Funksional talablar",must:1,d:`<ul><li>Kameradan real vaqtda yuzni aniqlash va tanish (old va orqa kamera)</li><li>Yangi shaxs qo'shish: kamera yoki galereya/fayllardan</li><li>Shaxslarni boshqarish, jurnal, CSV eksport, zaxira nusxa</li><li>To'liq offline ishlash</li></ul>`},
+   {t:"Platforma va versiyalar ro'yxatini tasdiqlash",must:1,os:["android","windows","legacy","ios","macos","linux"],d:`Yuqoridagi “Platformalar matritsasi”ni buyurtmachi bilan kelishing. Har platforma uchun holatni belgilang: <i>rasmiy</i> yoki <i>eksperimental, best-effort</i>.`},
+   {t:"Minimal qurilma profilini belgilash",must:1,os:["android"],d:`Masalan: Android 7.0, 2 GB RAM, 4 yadroli ARMv7 (Cortex-A53), 5 MP old kamera. Unumdorlik maqsadlari shu profil bo'yicha o'lchanadi: aniqlash + tanish ≤ 300 ms. Zamonaviy telefonda ≤ 80 ms.`},
+   {t:"Test qurilmalarini topish",must:1,os:["android","legacy"],d:`<ul><li>Kamida bitta <b>haqiqiy</b> Android 7.0/7.1 qurilma, 32-bitli bo'lsa yaxshi</li><li>Android 9 va Android 14+ qurilmalar</li><li>Windows 7 SP1 VM (VirtualBox), web-kamerani USB passthrough orqali ulash</li><li>Ixtiyoriy: Firebase Test Lab yoki BrowserStack</li></ul>`},
+   {t:"PoC-1: bo'sh Tauri ilova Android 7'da ishga tushadimi",must:1,os:["android"],d:`<p><code>pnpm tauri android build --apk --target armv7 aarch64</code>. Android 7 qurilmaga o'rnating. Agar <code>NoClassDefFoundError: BootstrapMethodError</code> bilan yopilsa (tauri#8788), 2-bosqichdagi Jackson aylanma yo'lini qo'llang va qayta sinang.</p><p><b>Natija qaror uchun asos bo'ladi:</b> ishlasa, minSdk 24 qoladi. Ishlamasa, buyurtmachiga ikki variant taklif qilinadi: minSdk 26 (Android 8+), yoki Android 7 uchun Tauri'siz alohida yengil ilova.</p>`},
+   {t:"PoC-2: tract + YuNet/SFace eski telefonda tezligi",must:1,os:["android"],d:`Statik rasm bilan aniqlash va embedding vaqtini o'lchang (armv7 va arm64). SFace fp32 juda sekin bo'lsa, int8 variantini yoki kichikroq kirish o'lchamini sinang. Kerak bo'lsa <code>ort</code> bilan solishtiring.`},
+   {t:"PoC-3: Windows 7'da bo'sh Tauri ilova",must:1,os:["legacy"],d:`win7 target + nightly build-std + WebView2 Fixed 109. Ilova ochilsa, kamera ham ishlasa, Win7 “eksperimental” sifatida rejada qoladi. Ochilmasa, Win7 qo'llanmaydi va buyurtmachiga sababi tushuntiriladi.`},
+   {t:"Arxitektura qarorlarini yozish (ADR)",must:1,d:`<ul><li>ADR-1: ML va baza Rust yadroda</li><li>ADR-2: tract asosiy inference dvigateli</li><li>ADR-3: kamera manbalari FrameSource trait orqali</li><li>ADR-4: minimal versiyalar va ularning sababi</li></ul>`},
+   {t:"Model litsenziyasi va huquqiy talablar",must:1,d:`YuNet (MIT) va SFace (Apache-2.0) tijoriy foydalanish uchun xavfsiz. InsightFace modellari esa notijorat. Biometrik ma'lumot uchun “Shaxsga doir ma'lumotlar to'g'risida”gi qonun talablari: rozilik, saqlash muddati, o'chirish huquqi.`}
+  ]},
+ {id:"p1",title:"Ishlab chiqish muhiti",sub:"Avval Android, keyin desktop",w:[1,1],k:"and",
+  goal:"`pnpm tauri android dev` va `pnpm tauri dev` ikkalasi ham ishlaydigan muhit.",
+  tasks:[
+   {t:"Android: JDK 17, SDK, NDK, Rust targetlari, emulator API 24",must:1,os:["android"],d:code(C.envAndroid,"bash · Android")},
+   {t:"Desktop bog'liqliklari",must:1,os:["windows","macos","linux"],d:`<div class="tabs" data-tabs><button class="on" data-tab="lin">Linux</button><button data-tab="mac">macOS / iOS</button><button data-tab="win">Windows</button><button data-tab="w7">Windows 7 build</button></div>
+     <div class="tabpane on" data-pane="lin">${code(C.depsLinux,"bash · Ubuntu 22.04+")}</div>
+     <div class="tabpane" data-pane="mac">${code(C.depsMac,"bash · macOS")}</div>
+     <div class="tabpane" data-pane="win">${code(C.depsWin,"PowerShell · Windows 10/11")}</div>
+     <div class="tabpane" data-pane="w7">${code(C.depsWin7,"PowerShell · Win7 target")}</div>`},
+   {t:"Versiyalarni qotirish: rust-toolchain.toml, .nvmrc, NDK versiyasi",must:1,d:`Barcha dasturchilarda va CI'da bir xil kompilyator va NDK ishlatilsin.`},
+   {t:"Git repozitoriy, .gitignore, Git LFS (*.onnx)",must:1,d:`KHOFace hali git repozitoriy emas. <code>gen/android</code> ham git'ga qo'shilsin, chunki unga qo'lda o'zgarishlar kiritiladi.`},
+   {t:"USB debugging: adb, Chrome DevTools (chrome://inspect) orqali WebView'ni tekshirish",os:["android"],d:`Android'da WebView'ni debug qilish uchun Chrome'da <code>chrome://inspect</code> ochiladi.`}
+  ]},
+ {id:"p2",title:"Loyiha skeleti",sub:"Android init, legacy build, modullar",w:[2,1.5],k:"and",
+  goal:"Bo'sh, lekin to'liq tuzilgan ilova: Android 7 emulatori, Windows va Linux'da ishga tushadi.",
+  tasks:[
+   {t:"Tauri 2 + Vue 3 skeleti (frontend/ — tayyor)",must:1,d:`Mavjud. <code>productName</code>ni "KHOFace" ga o'zgartiring.`},
+   {t:"Android loyihasini yaratish: tauri android init",must:1,os:["android"],d:code(C.androidInit,"bash")},
+   {t:"Android 7 crash aylanma yo'li (Jackson, desugaring)",must:1,os:["android"],d:`<div class="risk">PoC-1 crash ko'rsatsagina qo'llang. Tauri yangi versiyada tuzatgan bo'lishi mumkin: avval <a href="https://github.com/tauri-apps/tauri/issues/8788" target="_blank" rel="noopener">#8788</a> holatini tekshiring.</div>${code(C.jackson,"kotlin · build.gradle.kts")}`},
+   {t:"Eski WebView uchun Vite: plugin-legacy va browserslist",must:1,os:["android","legacy"],d:code(C.vite,"ts · vite.config.ts")},
+   {t:"Frontend kutubxonalari",must:1,d:code(C.frontDeps,"bash")},
+   {t:"Rust bog'liqliklari (platformaga qarab)",must:1,d:code(C.cargo,"toml")},
+   {t:"Papka tuzilmasi",must:1,d:code(C.tree,"tuzilma")},
+   {t:"lib.rs, AppState, AppError",must:1,d:code(C.lib,"rust")},
+   {t:"tauri.conf.json: minSdk, iOS, macOS, WebView2 rejimi, CSP",must:1,os:["android","windows","ios","macos"],d:code(C.conf,"json")},
+   {t:"Capabilities: mobil va desktop uchun alohida",d:`<code>capabilities/mobile.json</code> (<code>"platforms": ["android","iOS"]</code>) va <code>desktop.json</code>. Faqat kerakli ruxsatlar.`}
+  ]},
+ {id:"p3",title:"SQLite ma'lumotlar bazasi",sub:"Sxema, migratsiya, repository",w:[3,1],
+  goal:"Har bir platformada bir xil ishlaydigan, migratsiyalanadigan baza.",
+  tasks:[
+   {t:"Sxema",must:1,d:code(C.schema,"sql")},
+   {t:"Ulanish, PRAGMA, migratsiya",must:1,d:code(C.db,"rust")},
+   {t:"rusqlite bundled'ni Android NDK bilan kompilyatsiya qilib tekshirish",must:1,os:["android"],d:`armv7 va aarch64 uchun. Odatda muammosiz, lekin CI'da tekshirilsin.`},
+   {t:"Repository: CRUD va tranzaksiyalar",must:1},
+   {t:"Zaxira: VACUUM INTO va import",d:`Android'da faylni ulashish (share sheet) yoki SAF orqali saqlash. Desktop'da dialog orqali.`},
+   {t:"Android: ilova o'chirilsa baza ham o'chadi. allowBackup siyosatini belgilash",os:["android"],d:`Biometrik ma'lumot Google Drive zaxirasiga tushmasligi uchun <code>android:allowBackup="false"</code> qo'yilsin yoki dataExtractionRules sozlansin.`},
+   {t:"Repository unit-testlari (in-memory)",must:1}
+  ]},
+ {id:"p4",title:"Inference yadrosi",sub:"tract: aniqlash, tekislash, embedding",w:[4,2],
+  goal:"Rasm berilsa, yuzlar ro'yxatini (bbox, nuqtalar, vektor) qaytaradigan va har platformada bir xil natija beradigan FaceEngine.",
+  tasks:[
+   {t:"InferenceBackend trait: tract (standart) va ort (ixtiyoriy)",must:1,d:`Barcha platformalarda standart dvigatel tract. <code>ort-backend</code> feature faqat Win10+, Android 8+ va macOS build'larida, benchmark ortiqchalikni ko'rsatsa yoqiladi. Bir xillik testi ikkala dvigatel uchun ham ishlaydi.`},
+   {t:"Detector: YuNet dekodlash va NMS",must:1,d:`Kirish o'lchami 32 ga karrali. Zaif qurilmalarda 320×240. Natija asl koordinatalarga qayta masshtablanadi.`},
+   {t:"Alignment: 5 nuqta → 112×112",must:1,d:code(C.align,"rust")},
+   {t:"Embedder (tract)",must:1,d:code(C.tract,"rust")},
+   {t:"Modellarni Android'da yuklash",must:1,os:["android"],d:`Android'da resurslar APK ichida (assets) turadi. Tauri <code>resolve(BaseDirectory::Resource)</code> yo'li odatdagi fayl yo'li bo'lmasligi mumkin, shuning uchun model baytlarini o'qing: Tauri fs/asset API yoki birinchi ishga tushishda <code>app_cache_dir</code>ga nusxalash. tract <code>model_for_read()</code> bilan oqimdan ham yuklay oladi.`},
+   {t:"Sifat baholash",must:1,d:code(C.quality,"rust")},
+   {t:"Matcher",must:1,d:code(C.matcher,"rust")},
+   {t:"Benchmark: armv7, arm64, x86_64 (criterion + qurilmada log)",must:1,os:["android"],d:`Detect, align, embed va match vaqtlari alohida o'lchanadi. Natijalar jadvalga yozib boriladi.`},
+   {t:"Model versiyasi va qayta indekslash",must:1,d:`Model almashtirilsa, embeddinglar saqlangan thumb rasmlardan qayta hisoblanadi.`}
+  ]},
+ {id:"p5",title:"Kamera manbalari",sub:"Avval Android CameraX, keyin desktop va iOS",w:[5,2.5],k:"and",
+  goal:"Bitta FrameSource interfeysi orqali har platformada kameradan kadrlar Rust yadroga oqib kelishi.",
+  tasks:[
+   {t:"FrameSource trait va FrameBus",must:1,d:code(C.frameSource,"rust")},
+   {t:"Android: Tauri camera plugin (Kotlin, CameraX)",must:1,os:["android"],d:code(C.kotlin,"kotlin")},
+   {t:"Android: JNI orqali kadrni Rust'ga uzatish",must:1,os:["android"],d:code(C.jni,"rust")},
+   {t:"Android/iOS ruxsatlari va ruxsat berilmagan holatlar",must:1,os:["android","ios"],d:code(C.manifest,"xml")+`<p>Ruxsat rad etilsa: tushuntiruvchi ekran va “Sozlamalarni ochish” tugmasi chiqadi. Android 7'da runtime ruxsatlar bor (API 23+).</p>`},
+   {t:"Android: aylanish (rotation), old kamera ko'zgu effekti, YUV→RGB",must:1,os:["android"],d:`<code>rotationDegrees</code> bo'yicha kadrni burish. Old kamera tasvirini UI'da ko'zgudek ko'rsatish, ML uchun esa aylantirmaslik. Eski qurilmalarda pixelStride 1 yoki 2 bo'lishi mumkin, ikkalasini ham qo'llang.`},
+   {t:"Android: ilova fon rejimiga o'tganda kamerani to'xtatish (lifecycle)",must:1,os:["android"]},
+   {t:"Zaxira yo'l: WebView getUserMedia → push_frame",os:["android","ios"],d:`Native plugin tayyor bo'lgunga qadar prototip yoki zaxira sifatida. Android WebView'da kamera ruxsati uchun <code>WebChromeClient.onPermissionRequest</code> qo'llanishi tekshirilsin.`},
+   {t:"Desktop: nokhwa (Windows, Win7, macOS, Linux)",must:1,os:["windows","legacy","macos","linux"],d:`Media Foundation Windows 7'da ham bor. macOS'da avval <code>nokhwa_initialize</code> bilan ruxsat so'raladi. Linux'da foydalanuvchi <code>video</code> guruhida bo'lishi kerak.`},
+   {t:"iOS: AVFoundation Swift plugin",os:["ios"],d:`AVCaptureVideoDataOutput (BGRA) kadrlari C-ABI orqali Rust FrameBus'ga uzatiladi.`},
+   {t:"Frontend: useCamera (barcha platformalar uchun bir xil)",must:1,d:code(C.useCamera,"ts")}
+  ]},
+ {id:"p6",title:"Yangi yuz qo'shish",sub:"Ro'yxatga olish ustasi (mobil-birinchi)",w:[7,1.5],
+  goal:"Foydalanuvchi telefonda bir qo'l bilan 1–2 daqiqada yangi shaxsni sifatli namunalar bilan qo'sha oladi.",
+  tasks:[
+   {t:"Usta bosqichlari: ma'lumot → rozilik → suratga olish → ko'rib chiqish → saqlash",must:1},
+   {t:"Kameradan namuna: avtomatik suratga olish (sifat o'tsa)",must:1,d:`Telefonda tugma bosish qiyin, shuning uchun ovalda yuz sifatli bo'lgan zahoti avtomatik olinadi. 5 ta pozitsiya: to'g'ri, chapga, o'ngga, yuqoriga, pastga.`},
+   {t:"Galereya/fayldan qo'shish",must:1,os:["android","ios","windows","macos","linux"],d:`Mobil: <code>tauri-plugin-dialog</code> (Android'da Storage Access Framework). Desktop: papka bo'yicha ommaviy import.`},
+   {t:"Dublikat tekshiruvi",must:1},
+   {t:"Saqlash: tranzaksiya va Matcher'ni yangilash",must:1}
+  ]},
+ {id:"p7",title:"Real vaqtda tanish",sub:"Live ekran, unumdorlik, jurnal",w:[8,1.5],
+  goal:"Eski telefonda ham silliq va barqaror tanish.",
+  tasks:[
+   {t:"Ishchi sikl: har kadrda aniqlash, embedding esa faqat yangi treklar uchun",must:1},
+   {t:"Adaptiv rejim: qurilma kuchiga qarab FPS va kirish o'lchami",must:1,os:["android"],d:`Birinchi ishga tushishda qisqa benchmark o'tkaziladi va “past / o'rta / yuqori” profil tanlanadi. Telefon qizib ketsa (Android 10+ <code>PowerManager.getThermalHeadroom</code>) kadr tezligi pasaytiriladi.`},
+   {t:"Trekking va ovoz berish",must:1},
+   {t:"Chegara sozlamasi va “Noma'lum” holati",must:1},
+   {t:"Jurnal (throttling bilan)",must:1},
+   {t:"Batareya: ekran o'chganda yoki ilova fonda bo'lganda to'xtatish",must:1,os:["android","ios"]}
+  ]},
+ {id:"p8",title:"Foydalanuvchi interfeysi",sub:"Mobil-birinchi, keyin desktop",w:[8.5,2],
+  goal:"360 px ekrandan katta monitorgacha qulay, eski WebView'larda ham to'g'ri chiqadigan interfeys.",
+  tasks:[
+   {t:"Mobil layout: pastki navigatsiya, safe-area, portret rejim",must:1,os:["android","ios"],d:`<code>env(safe-area-inset-*)</code> va Android 7 uchun zaxira paddinglar. 360×640 ekranda sinab ko'rish.`},
+   {t:"Android “Orqaga” tugmasi va navigatsiya",must:1,os:["android"],d:`Orqaga tugmasi router'da orqaga qaytaradi, bosh sahifada esa ilovadan chiqishni tasdiqlaydi.`},
+   {t:"Eski WebView uchun xavfsiz CSS (flex gap, aspect-ratio va h.k.siz)",must:1,os:["android","legacy"]},
+   {t:"Desktop layout: yon menyu, klaviatura yorliqlari",os:["windows","macos","linux"]},
+   {t:"Sahifalar: Live, Shaxslar, Qo'shish, Jurnal, Sozlamalar",must:1},
+   {t:"i18n: o'zbek (lotin), rus, ingliz",must:1},
+   {t:"Bo'sh va xato holatlar: kamera yo'q, ruxsat yo'q, model topilmadi",must:1}
+  ]},
+ {id:"p9",title:"Xavfsizlik va maxfiylik",sub:"Shifrlash, liveness, CSP",w:[10,1.5],
+  goal:"Biometrik ma'lumotlar himoyalangan.",
+  tasks:[
+   {t:"CSP'ni yoqish (hozir csp: null)",must:1},
+   {t:"Bazani shifrlash: SQLCipher, kalit OS'ning xavfsiz xotirasida",d:`Android: Keystore (API 23+, Android 7 bilan mos). iOS/macOS: Keychain. Windows: DPAPI/Credential Manager (Win7'da ham bor). Linux: Secret Service.`},
+   {t:"Liveness / anti-spoofing (MiniFASNet, Apache-2.0)",d:`Kirish nazorati uchun majburiy. Eski telefonlarda yengil faol tekshiruv ishlatilsin: ko'z yumish, boshni burish.`},
+   {t:"Android: allowBackup=false, screenshot'ni taqiqlash (FLAG_SECURE, ixtiyoriy)",os:["android"]},
+   {t:"Rozilik va o'chirish huquqi",must:1},
+   {t:"Admin PIN (argon2)",d:`Shaxslarni o'zgartirish va eksport qilishni himoyalaydi.`}
+  ]},
+ {id:"p10",title:"Eski versiyalar bilan moslik",sub:"Android 7, Windows 7/8.1, eski macOS",w:[11,2],k:"leg",
+  goal:"Eski tizimlarda ham ilovaning muammosiz ishlashini alohida build'lar va maqsadli testlar bilan ta'minlash.",
+  tasks:[
+   {t:"Android 7: WebView versiyasini aniqlash va ogohlantirish",must:1,os:["android"],d:`Ishga tushishda <code>navigator.userAgent</code> dan Chrome versiyasi olinadi. Juda eski bo'lsa (masalan, 60 dan past), foydalanuvchiga “Android System WebView'ni Play Market'dan yangilang” degan tavsiya chiqadi. Ilova esa legacy bundle bilan baribir ishlashi kerak.`},
+   {t:"Android 7: 32-bit (armeabi-v7a) build va kam RAM",must:1,os:["android"],d:`1–2 GB RAM'li qurilmalarda int8 model va kichik kirish o'lchami. <code>android:largeHeap</code> ishlatmang, xotira sarfini o'lchang.`},
+   {t:"Android 7: CameraX va Camera2 LEGACY darajasidagi qurilmalar",must:1,os:["android"],d:`Ko'p eski qurilmalarda Camera2 “LEGACY” darajada ishlaydi: ruxsat etilgan o'lchamlar kam, FPS past. CameraX buni o'zi boshqaradi, lekin haqiqiy qurilmada tekshirish shart.`},
+   {t:"Windows 7/8.1: alohida build konfiguratsiyasi",must:1,os:["legacy"],d:code(C.win7conf,"json · tauri.win7.conf.json")},
+   {t:"Windows 7: faqat tract ishlatilishini tekshirish",must:1,os:["legacy"],d:`ONNX Runtime Win7'ni qo'llamaydi. Win7 build'da <code>ort-backend</code> o'chiq bo'lsin. Bog'liqliklarda Win8+ API (masalan, <code>GetSystemTimePreciseAsFileTime</code>) yo'qligini <code>dumpbin /imports</code> bilan tekshiring.`},
+   {t:"Windows 7: 32-bit (i686-win7) build",os:["legacy"],d:`Eski 32-bitli Windows 7 kompyuterlari uchun. WebView2 Fixed 109 ning x86 varianti bilan.`},
+   {t:"Windows 7: o'rnatuvchi va kerakli KB yangilanishlar ro'yxati",must:1,os:["legacy"],d:`SP1, KB4474419 (SHA-2), KB3140245 (TLS 1.2). O'rnatuvchi tekshiradi va yetishmasa aniq xabar beradi.`},
+   {t:"Eski macOS (10.13–10.14) sinovi",os:["macos","legacy"],d:`Rasmiy minimal versiya 10.15. Undan eskisi faqat sinovdan o'tsa qo'llanadi.`},
+   {t:"Qo'llab-quvvatlash siyosatini yozish",must:1,d:`Qaysi versiya “rasmiy”, qaysi “best-effort”, qachon to'xtatiladi. Masalan: Win7 bo'yicha xatolar past ustuvorlikda tuzatiladi.`}
+  ]},
+ {id:"p11",title:"Test va sifat",sub:"Qurilmalar laboratoriyasi, aniqlik, bir xillik",w:[12,2],
+  goal:"Har bir qo'llanadigan versiyada ishlashi va aniqlik raqamlar bilan isbotlanadi.",
+  tasks:[
+   {t:"Rust unit-testlari",must:1},
+   {t:"Platformalar o'rtasida bir xillik testi (golden embedding)",must:1,d:code(C.test,"rust")},
+   {t:"Qurilmalar matritsasi bo'yicha qo'lda test",must:1,os:["android","legacy","windows","ios","macos","linux"],d:`<div class="tbl-wrap"><table><thead><tr><th>Qurilma</th><th>Nimani tekshirish</th></tr></thead><tbody>
+     <tr><td>Android 7.0 armv7, 2 GB</td><td>Ishga tushish, kamera, tezlik, xotira, qizish</td></tr>
+     <tr><td>Android 7.1, yangilanmagan WebView</td><td>Legacy bundle, UI to'g'ri chiqishi</td></tr>
+     <tr><td>Android 10 / 14 / 15+</td><td>Ruxsatlar, edge-to-edge, orqa kamera</td></tr>
+     <tr><td>Windows 7 SP1 VM (x64, x86)</td><td>O'rnatish, WebView2 109, kamera</td></tr>
+     <tr><td>Windows 10 / 11</td><td>Asosiy ssenariylar</td></tr>
+     <tr><td>macOS, Ubuntu 22.04, iOS 15+</td><td>Asosiy ssenariylar</td></tr></tbody></table></div>`},
+   {t:"Avtomatik Android testlari: emulator API 24 va 34 (CI)",os:["android"],d:`<code>reactivecircus/android-emulator-runner</code> bilan ilova o'rnatiladi va ichidagi diagnostika testi ishga tushiriladi.`},
+   {t:"Aniqlik benchmarki (ROC, chegara tanlash)",must:1,d:`Eski telefonlarning past sifatli kameralari bilan olingan namunalar ham test to'plamiga qo'shilsin.`},
+   {t:"Frontend testlari: Vitest",d:`<code>@tauri-apps/api/mocks</code> bilan.`},
+   {t:"E2E: tauri-driver (Linux, Windows)",os:["windows","linux"]}
+  ]},
+ {id:"p12",title:"Paketlash va tarqatish",sub:"Avval APK/AAB, keyin desktop va Win7",w:[13.5,1.5],k:"and",
+  goal:"Bitta tag push qilinganda barcha platformalar uchun paketlar avtomatik tayyorlanadi.",
+  tasks:[
+   {t:"Android imzolash (keystore) va APK/AAB build",must:1,os:["android"],d:`Keystore GitHub Secrets'da saqlanadi. ABI bo'yicha bo'lingan APK'lar (armv7, arm64) hajmni kamaytiradi.`},
+   {t:"Tarqatish kanali: Google Play va/yoki to'g'ridan-to'g'ri APK",must:1,os:["android"],d:`Google Play yangi ilovalar uchun eng so'nggi <code>targetSdk</code>ni talab qiladi. Bu minSdk 24 ga xalaqit bermaydi. Play'siz qurilmalar uchun to'g'ridan-to'g'ri APK va RuStore yoki boshqa do'konlar.`},
+   {t:"CI: android, desktop, windows7 job'lari",must:1,d:code(C.ci,"yaml")},
+   {t:"Desktop imzolash: Authenticode (SHA-2, Win7 uchun KB4474419), Apple notarization",os:["windows","legacy","macos"]},
+   {t:"Linux: .deb, .rpm, .AppImage",os:["linux"]},
+   {t:"Yangilanish: desktop'da tauri-plugin-updater, mobil'da do'kon orqali",d:`Win7 build alohida yangilanish kanaliga ega bo'ladi (alohida latest.json).`}
+  ]},
+ {id:"p13",title:"iOS",sub:"Android'dan keyin",w:[15,2],opt:1,k:"leg",
+  goal:"Xuddi shu Rust yadro va Vue UI bilan iOS 15+ versiyasi.",
+  tasks:[
+   {t:"pnpm tauri ios init, Xcode loyihasi, imzolash",os:["ios"]},
+   {t:"AVFoundation kamera plugini (5-bosqich)",os:["ios"]},
+   {t:"tract'ni aarch64-apple-ios uchun kompilyatsiya va benchmark",os:["ios"]},
+   {t:"TestFlight va App Store talablari (maxfiylik manifesti)",os:["ios"],d:`Biometrik ma'lumotlardan foydalanish App Store Review'da aniq tushuntirilishi kerak.`}
+  ]}
+];
+
+/* ---------- Yordamchilar ---------- */
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function code(src,title){return `<div class="code"><div class="ctitle">${esc(title||"")}</div><button class="btn copy" type="button">Nusxa</button><pre><code>${esc(src)}</code></pre></div>`}
+const OSNAME={android:"Android",ios:"iOS",windows:"Windows",legacy:"Eski versiyalar",macos:"macOS",linux:"Linux"};
+const KEY="khoface-plan-v2";
+let state={};
+try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){state={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+/* ---------- Render ---------- */
+const phasesEl=document.getElementById("phases"), navEl=document.getElementById("navPhases");
+PHASES.forEach((p,pi)=>{
+  const sec=document.createElement("section");
+  sec.className="card phase";sec.id=p.id;
+  sec.innerHTML=`
+   <div class="phase-head" role="button" tabindex="0" aria-expanded="false">
+     <div class="phase-num">${pi}</div>
+     <div class="phase-title"><h2>${p.title}${p.opt?'<span class="tag opt">keyingi navbat</span>':''}${p.k==="and"?'<span class="tag os-android">Android ustuvor</span>':''}</h2><div class="sub">${p.sub}</div></div>
+     <div class="phase-meta"><span class="pc"></span><div class="bar"><span></span></div><span class="chev">▶</span></div>
+   </div>
+   <div class="phase-body">
+     <div class="goal"><b>Maqsad:</b> ${esc(p.goal).replace(/`([^`]+)`/g,"<code>$1</code>")}</div>
+     <ul class="tasks">${p.tasks.map((t,ti)=>{
+       const id=p.id+"_"+ti, os=(t.os||[]);
+       const osTags=os.length&&os.length<6?os.map(o=>`<span class="tag os ${o==="android"?"os-android":o==="legacy"?"os-legacy":""}">${OSNAME[o]}</span>`).join(""):"";
+       return `<li data-id="${id}" data-os="${os.join(" ")}">
+         <div class="task-row">
+           <input type="checkbox" id="${id}">
+           <label for="${id}">${t.t}${t.must?'<span class="tag must">majburiy</span>':''}${osTags}</label>
+           ${t.d?'<button class="more" type="button">Batafsil ▾</button>':''}
+         </div>
+         ${t.d?`<div class="task-detail">${t.d}</div>`:''}
+       </li>`}).join("")}</ul>
+   </div>`;
+  phasesEl.appendChild(sec);
+  const a=document.createElement("a");a.href="#"+p.id;
+  a.innerHTML=`<span>${pi}. ${p.title}</span><span class="cnt"></span>`;
+  navEl.appendChild(a);
+});
+
+function refresh(){
+  let all=0,done=0;
+  PHASES.forEach((p,pi)=>{
+    const sec=document.getElementById(p.id);let d=0;
+    p.tasks.forEach((t,ti)=>{
+      const id=p.id+"_"+ti, li=sec.querySelector(`li[data-id="${id}"]`), cb=li.querySelector("input");
+      cb.checked=!!state[id]; li.classList.toggle("checked",cb.checked); if(cb.checked)d++;
+    });
+    all+=p.tasks.length;done+=d;
+    const pct=Math.round(d/p.tasks.length*100);
+    sec.querySelector(".pc").textContent=`${d}/${p.tasks.length}`;
+    sec.querySelector(".phase-meta .bar span").style.width=pct+"%";
+    sec.querySelector(".phase-num").classList.toggle("done",d===p.tasks.length);
+    const c=navEl.children[pi].querySelector(".cnt");c.textContent=`${d}/${p.tasks.length}`;c.classList.toggle("done",d===p.tasks.length);
+  });
+  const pct=Math.round(done/all*100);
+  document.getElementById("totalTxt").textContent=`${done}/${all} · ${pct}%`;
+  document.getElementById("totalBar").style.width=pct+"%";
+}
+
+/* ---------- Filtrlar ---------- */
+let curOS="all", curQ="";
+function applyFilters(){
+  PHASES.forEach(p=>{
+    const sec=document.getElementById(p.id);let any=false;
+    sec.querySelectorAll("li").forEach(li=>{
+      const os=li.dataset.os;
+      const osHit=curOS==="all"||!os||os.split(" ").includes(curOS);
+      const qHit=!curQ||li.textContent.toLowerCase().includes(curQ)||(p.title+" "+p.sub).toLowerCase().includes(curQ);
+      const hit=osHit&&qHit;
+      li.classList.toggle("hidden",!hit);if(hit)any=true;
+    });
+    sec.classList.toggle("hidden",!any);
+    if((curQ||curOS!=="all")&&any)sec.classList.add("open");
+  });
+}
+function setOS(os){
+  curOS=os;
+  document.querySelectorAll(".osbtn").forEach(b=>b.classList.toggle("on",b.dataset.os===os));
+  applyFilters();
+}
+document.getElementById("osbar").addEventListener("click",e=>{const b=e.target.closest(".osbtn");if(b)setOS(b.dataset.os)});
+document.querySelectorAll("tr.clickable").forEach(tr=>tr.addEventListener("click",()=>{
+  setOS(tr.dataset.os);document.getElementById("phases").scrollIntoView();
+}));
+document.getElementById("search").addEventListener("input",e=>{curQ=e.target.value.trim().toLowerCase();applyFilters()});
+
+/* ---------- Hodisalar ---------- */
+phasesEl.addEventListener("change",e=>{
+  if(e.target.matches('input[type=checkbox]')){state[e.target.id]=e.target.checked;save();refresh()}
+});
+phasesEl.addEventListener("click",e=>{
+  const head=e.target.closest(".phase-head");
+  if(head){const s=head.parentElement;s.classList.toggle("open");head.setAttribute("aria-expanded",s.classList.contains("open"));return}
+  const more=e.target.closest(".more");
+  if(more){const li=more.closest("li");li.classList.toggle("expanded");more.textContent=li.classList.contains("expanded")?"Yopish ▴":"Batafsil ▾";return}
+  const tab=e.target.closest("[data-tab]");
+  if(tab){const box=tab.closest(".task-detail");box.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("on",b===tab));
+    box.querySelectorAll("[data-pane]").forEach(p=>p.classList.toggle("on",p.dataset.pane===tab.dataset.tab));}
+});
+phasesEl.addEventListener("keydown",e=>{
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches(".phase-head")){e.preventDefault();e.target.click()}
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".copy"); if(!b)return;
+  const txt=b.parentElement.querySelector("pre").innerText;
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>{b.textContent="Nusxalandi ✓";setTimeout(()=>b.textContent="Nusxa",1400)}).catch(()=>{});
+});
+navEl.addEventListener("click",e=>{
+  const a=e.target.closest("a");if(!a)return;
+  const s=document.querySelector(a.getAttribute("href"));if(s)s.classList.add("open");
+});
+let allOpen=false;
+document.getElementById("toggleAll").onclick=function(){
+  allOpen=!allOpen;
+  document.querySelectorAll(".phase").forEach(s=>s.classList.toggle("open",allOpen));
+  this.textContent=allOpen?"Hammasini yopish":"Hammasini ochish";
+};
+document.getElementById("resetBtn").onclick=()=>{if(confirm("Barcha belgilar tozalansinmi?")){state={};save();refresh()}};
+const root=document.documentElement;
+try{const th=localStorage.getItem(KEY+"-theme");if(th)root.dataset.theme=th}catch(e){}
+document.getElementById("themeBtn").onclick=()=>{
+  const dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme=dark?"light":"dark";
+  try{localStorage.setItem(KEY+"-theme",root.dataset.theme)}catch(e){}
+};
+
+/* ---------- Arxitektura ---------- */
+const info=document.getElementById("nodeInfo");
+document.querySelectorAll(".diagram .node").forEach(n=>n.addEventListener("click",()=>{
+  document.querySelectorAll(".diagram .node").forEach(x=>x.classList.toggle("sel",x===n));
+  const d=NODES[n.dataset.k];info.innerHTML=`<b>${d.t}</b><span>${esc(d.d)}</span>`;
+}));
+const pipeEl=document.getElementById("pipeline"),pipeInfo=document.getElementById("pipeInfo");
+PIPE.forEach((s,i)=>{
+  const b=document.createElement("div");b.className="pstep";b.tabIndex=0;
+  b.innerHTML=`<b>${i+1}. ${s.k}</b><span>${s.s}</span>`;
+  const sel=()=>{[...pipeEl.children].forEach(x=>x.classList.toggle("sel",x===b));pipeInfo.innerHTML=`<b>${s.k}</b><span>${esc(s.d)}</span>`};
+  b.onclick=sel;b.onkeydown=e=>{if(e.key==="Enter")sel()};
+  pipeEl.appendChild(b);if(i===0)sel();
+});
+
+/* ---------- Gantt ---------- */
+const g=document.getElementById("gantt"),TOTAL=18;
+g.innerHTML=`<div></div><div class="scale">${Array.from({length:TOTAL/2+1},(_,i)=>`<span>${i*2}</span>`).join("")}</div>`+
+ PHASES.map((p,i)=>`<div>${i}. ${p.title}</div><div class="track" title="${p.w[1]} hafta"><span class="${p.k||""}" style="left:${p.w[0]/TOTAL*100}%;width:${p.w[1]/TOTAL*100}%"></span></div>`).join("");
+
+/* ---------- Faol bo'lim ---------- */
+const navLinks=[...document.querySelectorAll("nav.side a")];
+const obs=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){
+  navLinks.forEach(a=>a.classList.toggle("active",a.getAttribute("href")==="#"+en.target.id))}})},{rootMargin:"-30% 0px -60% 0px"});
+document.querySelectorAll("main > section, #phases > section").forEach(s=>obs.observe(s));
+
+refresh();
+document.getElementById("p0").classList.add("open");
+</script>
+</body>
+</html>

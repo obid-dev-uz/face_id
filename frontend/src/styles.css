@@ -1,0 +1,150 @@
+/* Android 7 WebView (Chrome 52) uchun: flex `gap`, aspect-ratio, inset, :is(), :has()
+   ishlatilmaydi. CSS o'zgaruvchilar Chrome 49+ da bor. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #15181d;
+  --muted: #667085;
+  --border: #e3e6eb;
+  --accent: #1f6feb;
+  --danger: #c4320a;
+  --tabbar-h: 56px;
+  --safe-bottom: 0px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #171a20;
+    --text: #e8eaee;
+    --muted: #98a2b3;
+    --border: #2a2f38;
+    --accent: #4c8dff;
+    --danger: #ff7a59;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+button { font: inherit; color: inherit; }
+
+/* ---------- Qobiq: mobilda pastki navigatsiya ---------- */
+.shell { min-height: 100%; }
+.content {
+  padding: 16px 16px;
+  padding-bottom: 72px; /* zaxira: env() yo'q bo'lsa */
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
+}
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: -webkit-box;
+  display: flex;
+  height: 56px;
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 10;
+}
+.tab {
+  -webkit-box-flex: 1;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 11px;
+}
+.tab.router-link-active { color: var(--accent); }
+.tab-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* ---------- Desktop: yon menyu ---------- */
+@media (min-width: 768px) {
+  .shell { display: flex; height: 100%; }
+  .tabbar {
+    position: static;
+    order: -1;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 200px;
+    height: auto;
+    padding: 16px 8px;
+    border-top: 0;
+    border-right: 1px solid var(--border);
+  }
+  .tab {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+  .tab.router-link-active { background: var(--bg); }
+  .tab-icon { margin: 0 12px 0 0; }
+  .content { flex: 1 1 auto; overflow: auto; padding: 24px 32px; }
+}
+
+/* ---------- Sahifa elementlari ---------- */
+.page { max-width: 720px; }
+.page-title { font-size: 22px; margin: 0 0 8px; }
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 24px 0 8px; }
+.muted { color: var(--muted); }
+.error { color: var(--danger); }
+.wrap { word-break: break-all; }
+
+.segmented { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.segmented button {
+  flex: 1 1 0;
+  min-height: 44px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+}
+.segmented button:first-child { border-left: 0; }
+.segmented button.on { background: var(--accent); color: #fff; }
+
+.kv { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px 14px; }
+.kv dt { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.kv dd { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.kv dd:last-child { border-bottom: 0; }
+
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.btn:disabled { opacity: .5; cursor: default; }
+@media (min-width: 768px) { .btn { display: inline-block; width: auto; } }
