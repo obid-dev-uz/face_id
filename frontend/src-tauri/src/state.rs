@@ -21,6 +21,8 @@ pub struct AppState {
     pub engine: RwLock<EngineState>,
     pub matcher: RwLock<Matcher>,
     pub stream: crate::camera::stream::Stream,
+    /// Ro'yxatga olish ustasi ochiq bo'lsa — joriy sessiya.
+    pub enroll: Mutex<Option<crate::enroll::Session>>,
 }
 
 impl AppState {
@@ -31,6 +33,7 @@ impl AppState {
             engine: RwLock::new(EngineState::Loading),
             matcher: RwLock::new(Matcher::new(FaceEngine::DIM)),
             stream: Default::default(),
+            enroll: Mutex::new(None),
         }
     }
 

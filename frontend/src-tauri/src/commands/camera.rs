@@ -41,10 +41,15 @@ pub async fn camera_availability(app: AppHandle) -> AppResult<CameraAvailability
 }
 
 #[tauri::command]
-pub async fn start_stream(app: AppHandle, facing: Facing, on_frame: Channel<InvokeResponseBody>) -> AppResult<()> {
+pub async fn start_stream(
+    app: AppHandle,
+    facing: Facing,
+    enroll: Option<bool>,
+    on_frame: Channel<InvokeResponseBody>,
+) -> AppResult<()> {
     blocking(move || {
         let state = tauri::Manager::state::<AppState>(&app);
-        state.stream.start(app.clone(), on_frame);
+        state.stream.start(app.clone(), on_frame, enroll.unwrap_or(false));
         #[cfg(target_os = "android")]
         crate::camera::android::attach(state.stream.bus.clone());
         #[cfg(all(desktop, feature = "desktop-camera"))]

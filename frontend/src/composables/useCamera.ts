@@ -12,11 +12,27 @@ export interface LiveFace {
   landmarks: [number, number][];
 }
 
+export type Pose = "frontal" | "left" | "right" | "up" | "down";
+export type EnrollHint =
+  | "noFace" | "multipleFaces" | "notCentered" | "tooFar" | "tooClose" | "turnPose"
+  | "blurry" | "lowScore" | "tooDark" | "tooBright" | "differentPerson" | "hold";
+
+export interface EnrollFeedback {
+  count: number;
+  target: Pose | null;
+  hint: EnrollHint | null;
+  captured: boolean;
+  yawDeg: number | null;
+  pitchDeg: number | null;
+  sharpness: number | null;
+}
+
 export interface FrameHeader {
   width: number;
   height: number;
   mirrored: boolean;
   faces: LiveFace[];
+  enroll?: EnrollFeedback;
   fps: number;
   detectMs: number;
   encodeMs: number;
@@ -32,7 +48,7 @@ export function parseFrame(raw: ArrayBuffer | number[]): { header: FrameHeader; 
   return { header, jpeg: new Uint8Array(buf, 4 + len) };
 }
 
-export function useCamera() {
+export function useCamera(options: { enroll?: boolean; onFrame?: (h: FrameHeader) => void } = {}) {
   const status = ref<CameraStatus>("idle");
   const error = ref<string | null>(null);
   const facing = ref<Facing>("front");
@@ -43,6 +59,7 @@ export function useCamera() {
   function onFrame(raw: ArrayBuffer | number[]) {
     const f = parseFrame(raw);
     header.value = f.header;
+    if (options.onFrame) options.onFrame(f.header);
     frameUrl.value = URL.createObjectURL(new Blob([f.jpeg], { type: "image/jpeg" }));
   }
 
@@ -74,7 +91,7 @@ export function useCamera() {
       }
       const channel = new Channel<ArrayBuffer>();
       channel.onmessage = onFrame;
-      await invoke("start_stream", { facing: which, onFrame: channel });
+      await invoke("start_stream", { facing: which, enroll: !!options.enroll, onFrame: channel });
       status.value = "running";
     } catch (e) {
       const msg = String(e);

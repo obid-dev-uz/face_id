@@ -121,3 +121,26 @@ export function readFile(file: Blob): Promise<Uint8Array> {
     r.readAsArrayBuffer(file);
   });
 }
+
+export interface EnrollSample {
+  thumb: string;
+  pose: string | null;
+  score: number;
+}
+
+export interface EnrollState {
+  samples: EnrollSample[];
+  target: string | null;
+  required: number;
+  duplicate: { personId: number; personName: string; score: number } | null;
+}
+
+export const enrollApi = {
+  start: () => invoke<void>("enroll_start"),
+  cancel: () => invoke<void>("enroll_cancel"),
+  state: () => invoke<EnrollState>("enroll_state"),
+  skipPose: () => invoke<void>("enroll_skip_pose"),
+  removeSample: (index: number) => invoke<void>("enroll_remove_sample", { index }),
+  addImage: (bytes: Uint8Array) => invoke<{ accepted: boolean; hint: string | null }>("enroll_add_image", bytes),
+  commit: (input: PersonInput, allowDuplicate = false) => invoke<Person>("enroll_commit", { input, allowDuplicate }),
+};

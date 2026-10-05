@@ -27,6 +27,9 @@ struct Header<'a> {
     /// Old kamera: UI'da ko'zgu kabi ko'rsatiladi (ramkalar ham).
     mirrored: bool,
     faces: &'a [Face],
+    /// Ro'yxatga olish rejimida: namuna olish holati.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    enroll: Option<crate::enroll::Feedback>,
     fps: f32,
     detect_ms: f32,
     encode_ms: f32,
@@ -40,6 +43,8 @@ pub struct Stream {
     running: Arc<AtomicBool>,
     /// Frontend oldingi kadrni chizib bo'ldi — keyingisini yuborish mumkin.
     ready: Arc<AtomicBool>,
+    /// Kadrlar ro'yxatga olish sessiyasiga ham beriladi.
+    enroll_mode: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
 }
 
@@ -48,15 +53,16 @@ impl Stream {
         self.ready.store(true, Ordering::Release);
     }
 
-    pub fn start(&self, app: AppHandle, channel: Channel<InvokeResponseBody>) {
+    pub fn start(&self, app: AppHandle, channel: Channel<InvokeResponseBody>, enroll: bool) {
         self.stop_worker();
         self.bus.clear();
         self.running.store(true, Ordering::Release);
         self.ready.store(true, Ordering::Release);
-        let (running, ready, bus) = (self.running.clone(), self.ready.clone(), self.bus.clone());
+        self.enroll_mode.store(enroll, Ordering::Release);
+        let (running, ready, bus, enroll) = (self.running.clone(), self.ready.clone(), self.bus.clone(), self.enroll_mode.clone());
         let handle = std::thread::Builder::new()
             .name("khoface-stream".into())
-            .spawn(move || run(app, channel, bus, running, ready))
+            .spawn(move || run(app, channel, bus, running, ready, enroll))
             .expect("stream thread");
         *self.worker.lock() = Some(handle);
     }
@@ -69,7 +75,14 @@ impl Stream {
     }
 }
 
-fn run(app: AppHandle, channel: Channel<InvokeResponseBody>, bus: FrameBus, running: Arc<AtomicBool>, ready: Arc<AtomicBool>) {
+fn run(
+    app: AppHandle,
+    channel: Channel<InvokeResponseBody>,
+    bus: FrameBus,
+    running: Arc<AtomicBool>,
+    ready: Arc<AtomicBool>,
+    enroll_mode: Arc<AtomicBool>,
+) {
     let state = app.state::<AppState>();
     let mut fps = Fps::default();
     while running.load(Ordering::Acquire) {
@@ -77,14 +90,21 @@ fn run(app: AppHandle, channel: Channel<InvokeResponseBody>, bus: FrameBus, runn
 
         // Modellar hali yuklanmagan bo'lsa ham kamera tasviri ko'rsatiladi.
         let t0 = Instant::now();
-        let faces = match state.engine() {
-            Ok(engine) => engine.live_detector.detect(&frame.rgb).unwrap_or_default(),
-            Err(_) => Vec::new(),
+        let engine = state.engine().ok();
+        let faces = match &engine {
+            Some(engine) => engine.live_detector.detect(&frame.rgb).unwrap_or_default(),
+            None => Vec::new(),
         };
         let detect_ms = ms(t0);
+        let enroll = match (&engine, enroll_mode.load(Ordering::Acquire)) {
+            (Some(engine), true) => state.enroll.lock().as_mut().map(|s| s.process_frame(engine, &frame.rgb, &faces)),
+            _ => None,
+        };
         fps.tick();
 
-        if !ready.swap(false, Ordering::AcqRel) {
+        // Namuna olingan kadr albatta ko'rsatiladi (frontend shu xabardan biladi).
+        let captured = enroll.as_ref().is_some_and(|e| e.captured);
+        if !ready.swap(false, Ordering::AcqRel) && !captured {
             continue; // frontend band — bu kadrni ko'rsatmaymiz, lekin aniqlash davom etadi
         }
         let t0 = Instant::now();
@@ -98,6 +118,7 @@ fn run(app: AppHandle, channel: Channel<InvokeResponseBody>, bus: FrameBus, runn
             height: frame.rgb.height(),
             mirrored: frame.facing == Facing::Front,
             faces: &faces,
+            enroll,
             fps: fps.value(),
             detect_ms,
             encode_ms: ms(t0),

@@ -2,6 +2,7 @@ mod camera;
 mod commands;
 mod db;
 mod engine;
+mod enroll;
 mod error;
 mod face;
 mod state;
@@ -43,6 +44,13 @@ pub fn run() {
             commands::camera::start_stream,
             commands::camera::stop_stream,
             commands::camera::camera_ack,
+            commands::enroll::enroll_start,
+            commands::enroll::enroll_cancel,
+            commands::enroll::enroll_state,
+            commands::enroll::enroll_skip_pose,
+            commands::enroll::enroll_remove_sample,
+            commands::enroll::enroll_add_image,
+            commands::enroll::enroll_commit,
             commands::engine::engine_status,
             commands::engine::analyze_image,
             commands::engine::benchmark_engine,

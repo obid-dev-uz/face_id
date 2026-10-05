@@ -13,7 +13,7 @@ use crate::state::{blocking, AppState, EngineState};
 
 /// Telefon kameralari 12+ MP rasm beradi; tahlil uchun shu o'lcham yetarli va ancha tez.
 const MAX_SIDE: u32 = 1280;
-const DEFAULT_THRESHOLD: f32 = 0.363;
+pub const DEFAULT_THRESHOLD: f32 = 0.363;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -103,7 +103,7 @@ pub async fn analyze_image(app: AppHandle, request: Request<'_>) -> AppResult<An
             .map(|(a, nearest)| {
                 let known = nearest.filter(|m| m.score >= threshold);
                 FoundFace {
-                    quality: quality::assess(&a.face, &a.aligned, &a.transform, &Default::default()),
+                    quality: quality::assess(&a.face, &a.aligned, &Default::default()),
                     face: a.face,
                     person_id: known.map(|m| m.person_id),
                     // Matcher faqat id saqlaydi, ism bazadan olinadi.

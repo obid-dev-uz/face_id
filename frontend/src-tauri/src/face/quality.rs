@@ -3,7 +3,7 @@
 use image::RgbImage;
 use serde::Serialize;
 
-use super::align::{Similarity, REF_5PTS};
+use super::align::REF_5PTS;
 use super::Face;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -24,8 +24,11 @@ pub struct Quality {
     pub score: f32,
     /// Tekislangan yuzdagi Laplasian dispersiyasi: kichik bo'lsa rasm xira.
     pub sharpness: f32,
-    /// Taxminiy chap-o'ng burilish, gradusda (0 = to'g'ri qaragan).
+    /// Taxminiy chap-o'ng burilish, gradusda (0 = to'g'ri qaragan). Musbat — odam o'zining
+    /// chap tomoniga burilgan (ko'zgusiz rasmda burun o'ngga siljigan).
     pub yaw_deg: f32,
+    /// Taxminiy yuqori-past qiyalik, gradusda. Musbat — yuqoriga qaragan.
+    pub pitch_deg: f32,
     pub brightness: f32,
     pub issues: Vec<QualityIssue>,
 }
@@ -43,14 +46,14 @@ impl Default for Thresholds {
     }
 }
 
-pub fn assess(face: &Face, aligned: &RgbImage, m: &Similarity, t: &Thresholds) -> Quality {
+pub fn assess(face: &Face, aligned: &RgbImage, t: &Thresholds) -> Quality {
     let gray: Vec<f32> = aligned
         .pixels()
         .map(|p| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32)
         .collect();
     let brightness = center_mean(&gray, aligned.width() as usize);
     let sharpness = laplacian_variance(&gray, aligned.width() as usize, aligned.height() as usize);
-    let yaw_deg = estimate_yaw(&face.landmarks, m);
+    let (yaw_deg, pitch_deg) = estimate_pose(&face.landmarks);
     let face_width = face.bbox[2];
 
     let mut issues = Vec::new();
@@ -71,18 +74,33 @@ pub fn assess(face: &Face, aligned: &RgbImage, m: &Similarity, t: &Thresholds) -
     } else if brightness > 220.0 {
         issues.push(QualityIssue::TooBright);
     }
-    Quality { face_width, score: face.score, sharpness, yaw_deg, brightness, issues }
+    Quality { face_width, score: face.score, sharpness, yaw_deg, pitch_deg, brightness, issues }
 }
 
-/// Tekislangan koordinatalarda burun ko'zlar o'rtasidan qancha siljiganiga qarab.
-/// Shablonda burun deyarli markazda; 45° burilishda siljish ko'zlar orasining ~yarmi.
-fn estimate_yaw(lm: &[[f32; 2]; 5], m: &Similarity) -> f32 {
-    let p = lm.map(|q| m.apply(q));
-    let eye_mid = (p[0][0] + p[1][0]) / 2.0;
-    let eye_dist = (p[1][0] - p[0][0]).abs().max(1.0);
-    let ref_off = REF_5PTS[2][0] - (REF_5PTS[0][0] + REF_5PTS[1][0]) / 2.0;
-    let r = ((p[2][0] - eye_mid - ref_off) / eye_dist * 2.0).clamp(-1.0, 1.0);
-    r.asin().to_degrees()
+/// Bosh pozasi (yaw, pitch) xom landmarklardan: ko'zlar o'rtasidan og'iz o'rtasiga
+/// o'tgan o'q yuzning vertikal o'qi; burunning shu o'qdan siljishi burilishni ko'rsatadi.
+/// (Tekislangan koordinatalar mos emas: tekislash burunga ham moslanib, siljishni yutadi.)
+/// Yaw musbat — burun rasmda o'ngga siljigan; pitch musbat — yuqoriga qaragan.
+pub fn estimate_pose(lm: &[[f32; 2]; 5]) -> (f32, f32) {
+    let eye = [(lm[0][0] + lm[1][0]) / 2.0, (lm[0][1] + lm[1][1]) / 2.0];
+    let mouth = [(lm[3][0] + lm[4][0]) / 2.0, (lm[3][1] + lm[4][1]) / 2.0];
+    let axis = [mouth[0] - eye[0], mouth[1] - eye[1]];
+    let axis_len2 = (axis[0] * axis[0] + axis[1] * axis[1]).max(1.0);
+    let eye_dist = ((lm[1][0] - lm[0][0]).powi(2) + (lm[1][1] - lm[0][1]).powi(2)).sqrt().max(1.0);
+    let n = [lm[2][0] - eye[0], lm[2][1] - eye[1]];
+    // O'qqa perpendikulyar (rasm o'ngi tomon musbat) va o'q bo'ylab tashkil etuvchilar
+    let side = (axis[1] * n[0] - axis[0] * n[1]) / axis_len2.sqrt();
+    let along = (n[0] * axis[0] + n[1] * axis[1]) / axis_len2;
+    // 45° burilishda burun ko'zlar orasining ~yarmiga siljiydi
+    let yaw = (side / eye_dist * 2.0).clamp(-1.0, 1.0).asin().to_degrees();
+    let ref_along = {
+        let r = &REF_5PTS;
+        let eye_y = (r[0][1] + r[1][1]) / 2.0;
+        (r[2][1] - eye_y) / ((r[3][1] + r[4][1]) / 2.0 - eye_y)
+    };
+    // Nisbatning 0.1 siljishi ≈ 15°
+    let pitch = ((ref_along - along) * 150.0).clamp(-90.0, 90.0);
+    (yaw, pitch)
 }
 
 fn laplacian_variance(g: &[f32], w: usize, h: usize) -> f32 {
@@ -113,25 +131,32 @@ fn center_mean(g: &[f32], w: usize) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::face::align::Similarity;
 
     fn face(lm: [[f32; 2]; 5], width: f32, score: f32) -> Face {
         Face { bbox: [0.0, 0.0, width, width], score, landmarks: lm }
     }
 
     #[test]
-    fn frontal_template_has_zero_yaw() {
-        let m = Similarity::estimate(&REF_5PTS, &REF_5PTS);
-        assert!(estimate_yaw(&REF_5PTS, &m).abs() < 1.0);
+    fn pose_from_landmarks() {
+        let (yaw, pitch) = estimate_pose(&REF_5PTS);
+        assert!(yaw.abs() < 1.0 && pitch.abs() < 1.0, "{yaw} {pitch}");
         let mut turned = REF_5PTS;
-        turned[2][0] += 15.0;
-        assert!(estimate_yaw(&turned, &m) > 30.0);
+        turned[2][0] += 10.0;
+        assert!(estimate_pose(&turned).0 > 30.0);
+        let mut up = REF_5PTS;
+        up[2][1] -= 6.0;
+        assert!(estimate_pose(&up).1 > 15.0);
+        // Rasm burilgan (bosh yon tomonga egilgan) bo'lsa ham yuz to'g'ri qaragan deb topiladi
+        let m = Similarity { a: 0.0, b: 1.0, tx: 200.0, ty: 0.0 }; // 90° burish
+        let (yaw, pitch) = estimate_pose(&REF_5PTS.map(|p| m.apply(p)));
+        assert!(yaw.abs() < 1.0 && pitch.abs() < 1.0, "{yaw} {pitch}");
     }
 
     #[test]
     fn flat_dark_crop_is_blurry_and_dark() {
         let img = RgbImage::from_pixel(112, 112, image::Rgb([20, 20, 20]));
-        let m = Similarity::estimate(&REF_5PTS, &REF_5PTS);
-        let q = assess(&face(REF_5PTS, 40.0, 0.5), &img, &m, &Thresholds::default());
+        let q = assess(&face(REF_5PTS, 40.0, 0.5), &img, &Thresholds::default());
         assert_eq!(
             q.issues,
             [QualityIssue::TooSmall, QualityIssue::LowScore, QualityIssue::Blurry, QualityIssue::TooDark]
@@ -144,8 +169,7 @@ mod tests {
             let v = if (x / 2 + y / 2) % 2 == 0 { 40 } else { 200 };
             image::Rgb([v, v, v])
         });
-        let m = Similarity::estimate(&REF_5PTS, &REF_5PTS);
-        let q = assess(&face(REF_5PTS, 150.0, 0.95), &img, &m, &Thresholds::default());
+        let q = assess(&face(REF_5PTS, 150.0, 0.95), &img, &Thresholds::default());
         assert!(q.issues.is_empty(), "{:?}", q.issues);
     }
 }

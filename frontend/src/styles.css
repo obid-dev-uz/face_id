@@ -148,3 +148,5 @@ button { font: inherit; color: inherit; }
 }
 .btn:disabled { opacity: .5; cursor: default; }
 @media (min-width: 768px) { .btn { display: inline-block; width: auto; } }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+a.btn { box-sizing: border-box; line-height: 22px; }

@@ -59,7 +59,6 @@ pub struct Timings {
 pub struct Analyzed {
     pub face: Face,
     pub aligned: RgbImage,
-    pub transform: align::Similarity,
     pub embedding: Vec<f32>,
 }
 
@@ -88,12 +87,12 @@ impl FaceEngine {
         let mut out = Vec::new();
         for face in faces.into_iter().take(max_faces) {
             let t0 = Instant::now();
-            let (aligned, transform) = align::align(img, &face.landmarks);
+            let (aligned, _) = align::align(img, &face.landmarks);
             t.align_ms += ms(t0);
             let t0 = Instant::now();
             let embedding = self.embedder.embed(&aligned)?;
             t.embed_ms += ms(t0);
-            out.push(Analyzed { face, aligned, transform, embedding });
+            out.push(Analyzed { face, aligned, embedding });
         }
         Ok((out, t))
     }
