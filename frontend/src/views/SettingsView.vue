@@ -158,6 +158,8 @@ async function makeBackup() {
       <dt>{{ $t("info.schema") }}</dt><dd>v{{ app.info.schemaVersion }}</dd>
       <dt>{{ $t("info.dataDir") }}</dt><dd class="wrap">{{ app.info.dataDir }}</dd>
       <dt>{{ $t("info.webview") }}</dt><dd class="wrap">{{ webview }}</dd>
+      <dt>{{ $t("info.ram") }}</dt>
+      <dd>{{ app.info.totalRamMb !== null ? app.info.totalRamMb + " MB" : "—" }}</dd>
     </dl>
     <p v-else class="muted">{{ $t("settings.loading") }}</p>
   </section>

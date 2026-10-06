@@ -12,6 +12,8 @@ pub struct AppInfo {
     data_dir: String,
     sqlite_version: &'static str,
     schema_version: u32,
+    /// Qurilmadagi umumiy RAM (MB); ≤ 2 GB bo'lsa, tahlil kichikroq kirish bilan ishlaydi.
+    total_ram_mb: Option<u64>,
 }
 
 /// Diagnostika: qurilmada skelet to'g'ri yig'ilganini tekshirish uchun.
@@ -25,6 +27,7 @@ pub fn app_info(state: State<'_, AppState>) -> AppResult<AppInfo> {
         data_dir: state.data_dir.display().to_string(),
         sqlite_version: rusqlite::version(),
         schema_version,
+        total_ram_mb: crate::engine::total_ram_mb(),
     })
 }
 

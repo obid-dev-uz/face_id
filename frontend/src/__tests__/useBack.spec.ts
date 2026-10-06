@@ -14,3 +14,12 @@ describe("Android back button", () => {
     expect(r && (r as { meta?: { parent?: string } }).meta).toEqual({ parent: "/persons" });
   });
 });
+
+import { webviewMajor } from "../platform";
+
+describe("WebView version", () => {
+  it("parses Chrome major from Android WebView UA", () => {
+    expect(webviewMajor("Mozilla/5.0 (Linux; Android 7.0; wv) AppleWebKit/537.36 Chrome/52.0.2743.100 Mobile Safari/537.36")).toBe(52);
+    expect(webviewMajor("Mozilla/5.0 (X11; Linux x86_64) Firefox/120.0")).toBeNull();
+  });
+});

@@ -3,11 +3,15 @@ package kho.face.camera
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.util.Size
 import android.view.WindowManager
+import androidx.camera.camera2.interop.Camera2CameraInfo
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
@@ -123,10 +127,29 @@ class CameraPlugin(private val activity: Activity) : Plugin(activity) {
             }
             p.unbindAll()
             // Lifecycle'ga bog'langan: ilova fonga o'tsa kamera o'zi to'xtaydi, qaytsa davom etadi.
-            p.bindToLifecycle(activity as LifecycleOwner, selector, analysis)
-            invoke.resolve()
+            val camera = p.bindToLifecycle(activity as LifecycleOwner, selector, analysis)
+            // Diagnostika: eski qurilmalarda Camera2 ko'pincha "LEGACY" darajada (kam o'lcham, past FPS).
+            val r = JSObject()
+            r.put("hardwareLevel", hardwareLevel(camera.cameraInfo))
+            analysis.resolutionInfo?.resolution?.let {
+                r.put("width", it.width)
+                r.put("height", it.height)
+            }
+            Log.i(TAG, "kamera: $r")
+            invoke.resolve(r)
         }
     }
+
+    @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)
+    private fun hardwareLevel(info: CameraInfo): String =
+        when (Camera2CameraInfo.from(info).getCameraCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)) {
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY -> "legacy"
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED -> "limited"
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL -> "full"
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3 -> "level3"
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL -> "external"
+            else -> "unknown"
+        }
 
     @Command
     fun stop(invoke: Invoke) {

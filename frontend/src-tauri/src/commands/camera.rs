@@ -1,6 +1,6 @@
 use tauri::ipc::{Channel, InvokeResponseBody};
 use tauri::{AppHandle, State};
-use tauri_plugin_khoface_camera::{CameraAvailability, CameraExt, Facing, PermissionState};
+use tauri_plugin_khoface_camera::{CameraAvailability, CameraExt, CameraInfo, Facing, PermissionState};
 
 use crate::error::{AppError, AppResult};
 use crate::state::{blocking, AppState};
@@ -46,21 +46,28 @@ pub async fn start_stream(
     facing: Facing,
     enroll: Option<bool>,
     on_frame: Channel<InvokeResponseBody>,
-) -> AppResult<()> {
+) -> AppResult<Option<CameraInfo>> {
     blocking(move || {
         let state = tauri::Manager::state::<AppState>(&app);
         state.stream.start(app.clone(), on_frame, enroll.unwrap_or(false));
         #[cfg(target_os = "android")]
         crate::camera::android::attach(state.stream.bus.clone());
         #[cfg(all(desktop, feature = "desktop-camera"))]
-        let started = crate::camera::desktop::start(state.stream.bus.clone(), facing);
+        let started = crate::camera::desktop::start(state.stream.bus.clone(), facing).map(|()| None);
         #[cfg(not(all(desktop, feature = "desktop-camera")))]
-        let started = app.camera().start(facing, 640, 480).map_err(AppError::from);
-        if let Err(e) = started {
-            state.stream.stop_worker();
-            return Err(e);
+        let started = app.camera().start(facing, 640, 480).map(Some).map_err(AppError::from);
+        match started {
+            Ok(info) => {
+                if let Some(i) = &info {
+                    log::info!("kamera: {i:?}");
+                }
+                Ok(info)
+            }
+            Err(e) => {
+                state.stream.stop_worker();
+                Err(e)
+            }
         }
-        Ok(())
     })
     .await
 }

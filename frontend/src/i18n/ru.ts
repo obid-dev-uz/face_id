@@ -68,6 +68,11 @@ export default {
     wipeConfirm2: "Это действие нельзя отменить. Точно удалить?",
     wiped: "Все данные удалены",
   },
+  webview: {
+    old: "Android System WebView на устройстве устарел (Chrome {v}). Приложение работает, но может быть медленнее — рекомендуется обновить до версии {min}+.",
+    update: "Обновить",
+    later: "Позже",
+  },
   persons: {
     empty: "Пока никого нет.",
     add: "Добавить человека",
@@ -116,5 +121,5 @@ export default {
     tooDark: "темно",
     tooBright: "пересвет",
   },
-  info: { version: "Версия", os: "Система", arch: "Архитектура", dataDir: "Папка данных", sqlite: "SQLite", schema: "Схема БД", webview: "WebView" },
+  info: { ram: "Оперативная память", version: "Версия", os: "Система", arch: "Архитектура", dataDir: "Папка данных", sqlite: "SQLite", schema: "Схема БД", webview: "WebView" },
 };

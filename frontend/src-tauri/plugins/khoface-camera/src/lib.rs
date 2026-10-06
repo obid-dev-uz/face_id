@@ -39,6 +39,16 @@ pub enum PermissionState {
     PromptWithRationale,
 }
 
+/// Ishga tushgan kamera haqida (diagnostika).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CameraInfo {
+    /// Camera2 darajasi: "legacy" | "limited" | "full" | "level3" | "external" | "unknown".
+    pub hardware_level: String,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CameraAvailability {
@@ -103,7 +113,7 @@ struct PermissionResponse {
 
 #[cfg(target_os = "android")]
 impl<R: Runtime> Camera<R> {
-    pub fn start(&self, facing: Facing, width: u32, height: u32) -> Result<()> {
+    pub fn start(&self, facing: Facing, width: u32, height: u32) -> Result<CameraInfo> {
         Ok(self.handle.run_mobile_plugin("start", StartArgs { facing, width, height })?)
     }
 
@@ -146,7 +156,7 @@ impl<R: Runtime> Camera<R> {
 
 #[cfg(not(target_os = "android"))]
 impl<R: Runtime> Camera<R> {
-    pub fn start(&self, _facing: Facing, _width: u32, _height: u32) -> Result<()> {
+    pub fn start(&self, _facing: Facing, _width: u32, _height: u32) -> Result<CameraInfo> {
         Err(Error::Unsupported)
     }
     pub fn stop(&self) -> Result<()> {

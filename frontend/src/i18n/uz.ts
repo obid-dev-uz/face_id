@@ -68,6 +68,11 @@ export default {
     wipeConfirm2: "Bu amalni qaytarib bo'lmaydi. Rostdan ham o'chirilsinmi?",
     wiped: "Barcha ma'lumotlar o'chirildi",
   },
+  webview: {
+    old: "Qurilmadagi Android System WebView eski (Chrome {v}). Ilova ishlaydi, lekin sekinroq bo'lishi mumkin — {min}+ versiyaga yangilash tavsiya qilinadi.",
+    update: "Yangilash",
+    later: "Keyinroq",
+  },
   persons: {
     empty: "Hali hech kim qo'shilmagan.",
     add: "Shaxs qo'shish",
@@ -116,5 +121,5 @@ export default {
     tooDark: "qorong'i",
     tooBright: "juda yorug'",
   },
-  info: { version: "Versiya", os: "Tizim", arch: "Arxitektura", dataDir: "Ma'lumotlar papkasi", sqlite: "SQLite", schema: "Baza sxemasi", webview: "WebView" },
+  info: { ram: "Operativ xotira", version: "Versiya", os: "Tizim", arch: "Arxitektura", dataDir: "Ma'lumotlar papkasi", sqlite: "SQLite", schema: "Baza sxemasi", webview: "WebView" },
 };

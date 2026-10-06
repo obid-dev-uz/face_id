@@ -10,6 +10,7 @@ export interface AppInfo {
   dataDir: string;
   sqliteVersion: string;
   schemaVersion: number;
+  totalRamMb: number | null;
 }
 
 export const useAppStore = defineStore("app", () => {

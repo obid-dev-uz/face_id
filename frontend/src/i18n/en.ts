@@ -68,6 +68,11 @@ export default {
     wipeConfirm2: "This cannot be undone. Delete everything?",
     wiped: "All data deleted",
   },
+  webview: {
+    old: "Android System WebView on this device is outdated (Chrome {v}). The app works but may be slower — updating to {min}+ is recommended.",
+    update: "Update",
+    later: "Later",
+  },
   persons: {
     empty: "No one has been added yet.",
     add: "Add person",
@@ -116,5 +121,5 @@ export default {
     tooDark: "too dark",
     tooBright: "too bright",
   },
-  info: { version: "Version", os: "System", arch: "Architecture", dataDir: "Data folder", sqlite: "SQLite", schema: "DB schema", webview: "WebView" },
+  info: { ram: "Memory", version: "Version", os: "System", arch: "Architecture", dataDir: "Data folder", sqlite: "SQLite", schema: "DB schema", webview: "WebView" },
 };

@@ -13,6 +13,16 @@ export function platform(): Platform {
   return "linux";
 }
 
+/** WebView (Chrome) asosiy versiyasi; aniqlab bo'lmasa — `null`. */
+export function webviewMajor(ua: string = navigator.userAgent): number | null {
+  const m = ua.match(/Chrome\/(\d+)\./);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+/** Bundan eski WebView'da ilova legacy bundle bilan ishlaydi, lekin sekin va xatolarga moyil:
+ *  foydalanuvchiga "Android System WebView"ni yangilash tavsiya qilinadi (reja, 10-bosqich). */
+export const MIN_RECOMMENDED_WEBVIEW = 60;
+
 export const isMobile = (): boolean => {
   const p = platform();
   return p === "android" || p === "ios";

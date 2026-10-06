@@ -39,6 +39,13 @@ export interface EnrollFeedback {
   sharpness: number | null;
 }
 
+/** Rust `CameraInfo`: Camera2 darajasi va haqiqiy o'lcham (Android). */
+export interface CameraInfo {
+  hardwareLevel: "legacy" | "limited" | "full" | "level3" | "external" | "unknown";
+  width: number | null;
+  height: number | null;
+}
+
 export interface FrameHeader {
   width: number;
   height: number;
@@ -68,6 +75,7 @@ export function useCamera(options: { enroll?: boolean; onFrame?: (h: FrameHeader
   const facing = ref<Facing>("front");
   const frameUrl = ref<string | null>(null);
   const header = shallowRef<FrameHeader | null>(null);
+  const info = ref<CameraInfo | null>(null);
   let shownUrl: string | null = null;
 
   function onFrame(raw: ArrayBuffer | number[]) {
@@ -105,7 +113,7 @@ export function useCamera(options: { enroll?: boolean; onFrame?: (h: FrameHeader
       }
       const channel = new Channel<ArrayBuffer>();
       channel.onmessage = onFrame;
-      await invoke("start_stream", { facing: which, enroll: !!options.enroll, onFrame: channel });
+      info.value = await invoke<CameraInfo | null>("start_stream", { facing: which, enroll: !!options.enroll, onFrame: channel });
       status.value = "running";
     } catch (e) {
       const msg = String(e);
@@ -133,5 +141,5 @@ export function useCamera(options: { enroll?: boolean; onFrame?: (h: FrameHeader
     if (shownUrl) URL.revokeObjectURL(shownUrl);
   });
 
-  return { status, error, facing, frameUrl, header, frameShown, start, stop, switchFacing, openSettings };
+  return { status, error, facing, frameUrl, header, info, frameShown, start, stop, switchFacing, openSettings };
 }

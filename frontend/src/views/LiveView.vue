@@ -66,6 +66,7 @@ const boxes = computed(() => {
         {{ cam.header.value.fps }} fps · detect {{ cam.header.value.detectMs.toFixed(0) }} ms ·
         jpeg {{ cam.header.value.encodeMs.toFixed(0) }} ms · {{ $t("camera.latency") }}
         {{ cam.header.value.latencyMs.toFixed(0) }} ms · {{ cam.header.value.width }}×{{ cam.header.value.height }}
+        <template v-if="cam.info.value"> · Camera2 {{ cam.info.value.hardwareLevel.toUpperCase() }}</template>
       </p>
     </template>
   </section>

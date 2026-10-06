@@ -3,6 +3,7 @@ import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { installBackButton } from "./composables/useBack";
+import WebViewNotice from "./components/WebViewNotice.vue";
 import { api } from "./api";
 import { isTauri } from "./platform";
 import { toastText } from "./composables/useToast";
@@ -32,6 +33,7 @@ const tabs = [
   <div class="shell">
     <main class="content">
       <!-- fullPath: /enroll va /enroll?person=… bir xil komponent, lekin holati alohida bo'lishi kerak -->
+      <WebViewNotice />
       <router-view :key="$route.fullPath" />
     </main>
     <nav class="tabbar">
