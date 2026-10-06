@@ -200,12 +200,12 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
       <template v-else>
         <p v-if="mode === 'setup' && step === 'new'" class="pin-text">{{ $t("admin.setupHint") }}</p>
+        <!-- Tekshirilayotganda nuqtalar chapdan o'ngga to'lqin bo'lib yaltiraydi -->
         <div class="pin-dots" :class="{ shake, busy }" aria-hidden="true">
-          <i v-for="i in PIN_LEN" :key="i" :class="{ on: i <= digits.length }" />
+          <i v-for="i in PIN_LEN" :key="i" :class="{ on: i <= digits.length }" :style="busy ? { animationDelay: (i - 1) * 0.1 + 's' } : undefined" />
         </div>
         <p class="pin-msg" role="status" aria-live="polite">
           <template v-if="locked">{{ $t("admin.locked", { t: fmtClock(lockedMs) }) }}</template>
-          <template v-else-if="busy">{{ $t("admin.checking") }}</template>
           <template v-else-if="message">{{ message }}</template>
         </p>
         <div class="pin-pad" :class="{ disabled: locked || busy }">
@@ -245,12 +245,12 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 .pin-dots { display: -webkit-box; display: flex; -webkit-box-pack: center; justify-content: center; margin: 14px 0 6px; }
 .pin-dots i { width: 14px; height: 14px; margin: 0 7px; border-radius: 50%; border: 2px solid var(--muted); -webkit-transition: background .1s; transition: background .1s; }
 .pin-dots i.on { background: var(--accent); border-color: var(--accent); }
-.pin-dots.busy i { -webkit-animation: pulse .9s ease-in-out infinite; animation: pulse .9s ease-in-out infinite; }
+.pin-dots.busy i { -webkit-animation: shimmer .9s ease-in-out infinite; animation: shimmer .9s ease-in-out infinite; }
 .pin-dots.shake { -webkit-animation: shake .4s; animation: shake .4s; }
 @-webkit-keyframes shake { 20%, 60% { -webkit-transform: translateX(-10px); } 40%, 80% { -webkit-transform: translateX(10px); } }
 @keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
-@-webkit-keyframes pulse { 50% { opacity: .35; } }
-@keyframes pulse { 50% { opacity: .35; } }
+@-webkit-keyframes shimmer { 0%, 100% { opacity: 1; -webkit-transform: scale(1); } 50% { opacity: .25; -webkit-transform: scale(.75); } }
+@keyframes shimmer { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .25; transform: scale(.75); } }
 
 .pin-pad { display: -webkit-box; display: flex; flex-wrap: wrap; margin: 0 -4px; }
 .pin-pad.disabled { opacity: .4; pointer-events: none; }

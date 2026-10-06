@@ -54,7 +54,6 @@ export default {
     wrong: "PIN noto'g'ri",
     attemptsLeft: "PIN noto'g'ri. Yana {n} ta urinish qoldi",
     locked: "Juda ko'p xato. {t} dan keyin qayta urining",
-    checking: "Tekshirilmoqda…",
     erase: "O'chirish",
     cancel: "Bekor qilish",
     forgot: "PIN'ni unutdingizmi?",

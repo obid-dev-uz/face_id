@@ -54,7 +54,6 @@ export default {
     wrong: "Неверный PIN",
     attemptsLeft: "Неверный PIN. Осталось попыток: {n}",
     locked: "Слишком много ошибок. Повторите через {t}",
-    checking: "Проверка…",
     erase: "Стереть",
     cancel: "Отмена",
     forgot: "Забыли PIN?",

@@ -54,7 +54,6 @@ export default {
     wrong: "Wrong PIN",
     attemptsLeft: "Wrong PIN. {n} attempts left",
     locked: "Too many wrong attempts. Try again in {t}",
-    checking: "Checking…",
     erase: "Erase",
     cancel: "Cancel",
     forgot: "Forgot the PIN?",
