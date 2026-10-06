@@ -79,7 +79,7 @@ export default {
     delete: "Удалить",
     confirmDelete: "Удалить {name} и все образцы?",
   },
-  live: { unknown: "Неизвестный", pending: "Распознавание…" },
+  live: { oneFace: "В кадре должен быть только один человек", facesInFrame: "Лиц в кадре: {n}", closer: "Подойдите ближе", similarity: "Сходство {v}%", unknown: "Неизвестный" },
   logs: { empty: "Журнал пока пуст. Здесь появятся узнанные и неизвестные лица со страницы камеры.", loadMore: "Загрузить ещё", unknown: "Неизвестное лицо",
     select: "Выбрать", done: "Готово", selectAll: "Выбрать все", delete: "Удалить",
     deleteSelected: "Удалить ({n})", clear: "Очистить журнал", deleted: "Удалено записей: {n}", cleared: "Журнал очищен",

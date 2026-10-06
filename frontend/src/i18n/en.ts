@@ -79,7 +79,7 @@ export default {
     delete: "Delete",
     confirmDelete: "Delete {name} and all samples?",
   },
-  live: { unknown: "Unknown", pending: "Recognizing…" },
+  live: { oneFace: "Only one person should be in the frame", facesInFrame: "{n} faces in frame", closer: "Move closer", similarity: "Similarity {v}%", unknown: "Unknown" },
   logs: { empty: "The log is empty. Recognized and unknown faces from the camera page appear here.", loadMore: "Load more", unknown: "Unknown person",
     select: "Select", done: "Done", selectAll: "Select all", delete: "Delete",
     deleteSelected: "Delete ({n})", clear: "Clear log", deleted: "{n} entries deleted", cleared: "Log cleared",

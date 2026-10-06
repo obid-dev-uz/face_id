@@ -312,10 +312,12 @@ impl Recognizer {
     }
 
     /// Kadrni trekerga beradi va ishchi bo'sh bo'lsa, navbatdagi embedding vazifasini yuboradi.
+    /// Kadrda bitta yuz bo'lgandagina tanishga urinadi: bir nechta odam bo'lsa, kim
+    /// tanilayotgani noaniq va jurnalga begona yozuvlar tushadi.
     pub fn on_frame(&self, frame: &RgbImage, faces: &[Face], source: &'static str) -> Vec<TrackView> {
         let mut t = self.tracker.lock();
         t.update(faces);
-        if !self.busy.load(Ordering::Acquire) {
+        if faces.len() == 1 && !self.busy.load(Ordering::Acquire) {
             if let Some((track_id, face)) = t.next_job(Instant::now()) {
                 self.busy.store(true, Ordering::Release);
                 self.jobs.put(Job { track_id, frame: frame.clone(), face, source });

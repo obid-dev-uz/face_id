@@ -79,7 +79,7 @@ export default {
     delete: "O'chirish",
     confirmDelete: "{name} va uning barcha namunalari o'chirilsinmi?",
   },
-  live: { unknown: "Noma'lum", pending: "Aniqlanmoqda…" },
+  live: { oneFace: "Kadrda faqat bitta odam bo'lishi kerak", facesInFrame: "Kadrda {n} ta yuz", closer: "Yaqinroq keling", similarity: "O'xshashlik {v}%", unknown: "Noma'lum" },
   logs: { empty: "Jurnal hozircha bo'sh. Kamera sahifasida tanilgan va noma'lum yuzlar shu yerga yoziladi.", loadMore: "Yana yuklash", unknown: "Noma'lum shaxs",
     select: "Tanlash", done: "Tayyor", selectAll: "Hammasini tanlash", delete: "O'chirish",
     deleteSelected: "O'chirish ({n})", clear: "Jurnalni tozalash", deleted: "{n} ta yozuv o'chirildi", cleared: "Jurnal tozalandi",
