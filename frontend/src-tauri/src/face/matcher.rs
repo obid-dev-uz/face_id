@@ -47,20 +47,6 @@ impl Matcher {
         true
     }
 
-    pub fn remove_person(&mut self, person_id: i64) {
-        let dim = self.dim;
-        let mut keep_ids = Vec::with_capacity(self.ids.len());
-        let mut keep = Vec::with_capacity(self.data.len());
-        for (i, &id) in self.ids.iter().enumerate() {
-            if id != person_id {
-                keep_ids.push(id);
-                keep.extend_from_slice(&self.data[i * dim..(i + 1) * dim]);
-            }
-        }
-        self.ids = keep_ids;
-        self.data = keep;
-    }
-
     /// Eng yaqin shaxs (chegarasiz). Ro'yxatga olishda dublikatni tekshirish uchun ham.
     pub fn nearest(&self, q: &[f32]) -> Option<Match> {
         if q.len() != self.dim {
@@ -115,15 +101,12 @@ mod tests {
     }
 
     #[test]
-    fn rejects_wrong_dim_and_removes_person() {
+    fn rejects_wrong_dim() {
         let mut m = Matcher::new(2);
         assert!(!m.add(1, &[1.0, 0.0, 0.0]));
-        m.add(1, &unit(&[1.0, 0.0]));
+        assert_eq!(m.len(), 0);
         m.add(2, &unit(&[0.0, 1.0]));
-        m.add(1, &unit(&[1.0, 0.1]));
-        m.remove_person(1);
         assert_eq!(m.len(), 1);
-        assert_eq!(m.nearest(&unit(&[1.0, 0.0])).unwrap().person_id, 2);
         assert!(m.nearest(&[1.0]).is_none());
     }
 }
