@@ -141,6 +141,8 @@ pub struct Duplicate {
 
 #[derive(Default)]
 pub struct Session {
+    /// Mavjud shaxsga namuna qo'shilmoqda (shaxs sahifasidan); `None` — yangi shaxs.
+    pub person_id: Option<i64>,
     pub samples: Vec<Sample>,
     /// Ketma-ket mos kadrlar soni va ular qaysi yo'nalishga tegishli.
     stable: u32,
@@ -298,16 +300,18 @@ impl Session {
     }
 
     /// Bazadagi eng o'xshash shaxs (chegaradan o'tsa). Barcha namunalar bo'yicha eng yuqori ball.
+    /// Mavjud shaxsga qo'shilayotganda uning o'zi dublikat hisoblanmaydi.
     pub fn duplicate(&self, matcher: &Matcher, threshold: f32) -> Option<(i64, f32)> {
         self.samples
             .iter()
             .filter_map(|s| matcher.nearest(&s.embedding))
-            .filter(|m| m.score >= threshold)
+            .filter(|m| m.score >= threshold && Some(m.person_id) != self.person_id)
             .max_by(|a, b| a.score.total_cmp(&b.score))
             .map(|m| (m.person_id, m.score))
     }
 
     /// Shaxs va namunalar bitta tranzaksiyada saqlanadi, keyin Matcher yangilanadi.
+    /// `person_id` bo'lsa, namunalar o'sha shaxsga qo'shiladi (`input` e'tiborsiz).
     pub fn commit(&self, conn: &mut rusqlite::Connection, matcher: &mut Matcher, input: &PersonInput) -> AppResult<Person> {
         if self.samples.is_empty() {
             return Err(AppError::Invalid("namuna olinmagan".into()));
@@ -323,9 +327,18 @@ impl Session {
                 device: Some(device_tag()),
             })
             .collect();
-        let person = repo::create_person(conn, input, &rows)?;
-        for s in &self.samples {
-            matcher.add(person.id, &s.embedding);
+        let person = match self.person_id {
+            Some(id) => {
+                repo::add_embeddings(conn, id, &rows)?;
+                repo::get_person(conn, id)?
+            }
+            None => repo::create_person(conn, input, &rows)?,
+        };
+        // Faolsizlantirilgan shaxs tanilmaydi: u faollashtirilganda Matcher bazadan qayta yuklanadi.
+        if person.is_active {
+            for s in &self.samples {
+                matcher.add(person.id, &s.embedding);
+            }
         }
         Ok(person)
     }
@@ -456,6 +469,14 @@ mod tests {
         assert!(score > 0.99);
         let other = Session { samples: vec![sample(&[0.0, 1.0])], ..Default::default() };
         assert_eq!(other.duplicate(&matcher, 0.36), None);
+
+        // Mavjud shaxsga qo'shish: o'zi dublikat emas, namunalar unga qo'shiladi
+        let more = Session { person_id: Some(p.id), samples: vec![sample(&[0.98, 0.1])], ..Default::default() };
+        assert_eq!(more.duplicate(&matcher, 0.36), None);
+        let p2 = more.commit(&mut conn, &mut matcher, &PersonInput::default()).unwrap();
+        assert_eq!((p2.id, p2.sample_count), (p.id, 3));
+        assert_eq!(matcher.len(), 3);
+        assert_eq!(repo::list_persons(&conn, None, true).unwrap().len(), 1);
     }
 
     #[test]

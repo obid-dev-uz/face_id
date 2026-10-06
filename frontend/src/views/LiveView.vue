@@ -2,6 +2,8 @@
 import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useCamera } from "../composables/useCamera";
+import CameraNotice from "../components/CameraNotice.vue";
+import EngineBanner from "../components/EngineBanner.vue";
 
 const { t } = useI18n();
 
@@ -38,24 +40,9 @@ const boxes = computed(() => {
 
 <template>
   <section class="page live">
-    <div v-if="cam.status.value === 'denied'" class="notice">
-      <h2>{{ $t("camera.deniedTitle") }}</h2>
-      <p class="muted">{{ $t("camera.deniedText") }}</p>
-      <button type="button" class="btn" @click="cam.start()">{{ $t("camera.retry") }}</button>
-      <button type="button" class="btn spaced" @click="cam.openSettings()">{{ $t("camera.openSettings") }}</button>
-    </div>
-    <div v-else-if="cam.status.value === 'unsupported'" class="notice">
-      <p class="muted">{{ $t("camera.unsupported") }}</p>
-    </div>
-    <div v-else-if="cam.status.value === 'noCamera'" class="notice">
-      <p class="muted">{{ $t("camera.noCamera") }}</p>
-    </div>
-    <div v-else-if="cam.status.value === 'error'" class="notice">
-      <p class="error wrap">{{ cam.error.value }}</p>
-      <button type="button" class="btn" @click="cam.start()">{{ $t("camera.retry") }}</button>
-    </div>
-
-    <template v-else>
+    <EngineBanner />
+    <CameraNotice :status="cam.status.value" :error="cam.error.value" @retry="cam.start()" @settings="cam.openSettings()" />
+    <template v-if="['idle', 'starting', 'running'].indexOf(cam.status.value) >= 0">
       <div class="viewer">
         <img
           v-if="cam.frameUrl.value"
@@ -101,7 +88,4 @@ const boxes = computed(() => {
 .unknown .label { background: #f04438; }
 .controls { margin-top: 12px; }
 .stats { font-size: 12px; margin-top: 8px; }
-.notice { padding: 24px 0; }
-.notice h2 { font-size: 18px; margin: 0 0 8px; }
-.spaced { margin-top: 8px; }
 </style>

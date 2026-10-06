@@ -201,6 +201,25 @@ pub fn load_embeddings(conn: &Connection, model: &str) -> AppResult<Vec<StoredEm
     Ok(rows.collect::<Result<_, _>>()?)
 }
 
+/// Shaxs sahifasi uchun: namunalar va ularning kichik rasmlari.
+#[derive(Debug, Clone)]
+pub struct SampleRow {
+    pub id: i64,
+    pub quality: Option<f32>,
+    pub thumb: Option<Vec<u8>>,
+    pub created_at: String,
+}
+
+pub fn list_samples(conn: &Connection, person_id: i64) -> AppResult<Vec<SampleRow>> {
+    let mut st = conn.prepare_cached(
+        "SELECT id, quality, thumb, created_at FROM face_embeddings WHERE person_id = ?1 ORDER BY id",
+    )?;
+    let rows = st.query_map([person_id], |r| {
+        Ok(SampleRow { id: r.get(0)?, quality: r.get(1)?, thumb: r.get(2)?, created_at: r.get(3)? })
+    })?;
+    Ok(rows.collect::<Result<_, _>>()?)
+}
+
 pub fn delete_embedding(conn: &Connection, id: i64) -> AppResult<()> {
     if conn.execute("DELETE FROM face_embeddings WHERE id = ?1", [id])? == 0 {
         return Err(AppError::NotFound("namuna"));
@@ -436,6 +455,10 @@ mod tests {
         assert_eq!(get_person(&c, p.id).unwrap().sample_count, 1);
         assert!(matches!(add_embeddings(&mut c, 999, &[sample(&[1.0])]), Err(AppError::NotFound(_))));
         let id = load_embeddings(&c, "sface").unwrap()[0].id;
+        let listed = list_samples(&c, p.id).unwrap();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].id, id);
+        assert!(list_samples(&c, 999).unwrap().is_empty());
         delete_embedding(&c, id).unwrap();
         assert_eq!(get_person(&c, p.id).unwrap().sample_count, 0);
     }

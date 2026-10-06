@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from "vue";
 import { useCamera, type EnrollFeedback, type FrameHeader, type Pose } from "../composables/useCamera";
 import { readFile } from "../api";
+import CameraNotice from "./CameraNotice.vue";
+import EngineBanner from "./EngineBanner.vue";
 
 const props = defineProps<{ required: number }>();
 const emit = defineEmits<{ (e: "captured"): void; (e: "addImage", bytes: Uint8Array): void }>();
@@ -22,6 +24,7 @@ function onFrame(h: FrameHeader) {
 const cam = useCamera({ enroll: true, onFrame });
 onMounted(() => cam.start("front"));
 
+const cameraOk = computed(() => ["idle", "starting", "running"].indexOf(cam.status.value) >= 0);
 const count = computed(() => (feedback.value ? feedback.value.count : 0));
 
 const signed = (v: number) => (v > 0 ? "+" : "") + Math.round(v);
@@ -81,6 +84,10 @@ defineExpose({ stop: cam.stop });
 
 <template>
   <div>
+    <EngineBanner />
+    <!-- Kamera ishlamasa ham galereyadan qo'shish mumkin -->
+    <CameraNotice :status="cam.status.value" :error="cam.error.value" @retry="cam.start('front')" @settings="cam.openSettings()" />
+    <template v-if="cameraOk">
     <div class="viewer-wrap"><div class="viewer">
       <img
         v-if="cam.frameUrl.value"
@@ -104,8 +111,7 @@ defineExpose({ stop: cam.stop });
     </div>
 
     <p class="instruction">
-      <template v-if="cam.status.value === 'denied'">{{ $t("camera.deniedTitle") }}</template>
-      <template v-else-if="!feedback">{{ $t("enroll.lookAtCamera") }}</template>
+      <template v-if="!feedback">{{ $t("enroll.lookAtCamera") }}</template>
       <template v-else-if="feedback.target === null">{{ $t("enroll.allCaptured") }}</template>
       <template v-else-if="feedback.hint && feedback.hint !== 'turnPose' && !(around && feedback.hint === 'hold')">
         {{ $t("enroll.hint." + feedback.hint) }}
@@ -116,6 +122,7 @@ defineExpose({ stop: cam.stop });
       yaw {{ signed(feedback.yawDeg) }}° · pitch {{ signed(feedback.pitchDeg || 0) }}° ·
       {{ $t("diag.sharpness") }} {{ Math.round(feedback.sharpness || 0) }}
     </p>
+    </template>
 
     <div class="actions">
       <label class="btn file-btn">

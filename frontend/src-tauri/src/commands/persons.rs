@@ -1,3 +1,4 @@
+use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
 use crate::db::repo::{self, Person, PersonInput};
@@ -7,7 +8,7 @@ use crate::state::{with_db, AppState};
 
 /// Faol shaxslar o'zgarganda Matcher bazadan qayta to'ldiriladi (aks holda o'chirilgan
 /// shaxs ham tanilib qolaveradi).
-async fn reload_matcher(app: &AppHandle) -> AppResult<()> {
+pub(crate) async fn reload_matcher(app: &AppHandle) -> AppResult<()> {
     let rows = with_db(app, |c| repo::load_embeddings(c, FaceEngine::MODEL_ID)).await?;
     *app.state::<AppState>().matcher.write() = Matcher::from_embeddings(FaceEngine::DIM, rows);
     Ok(())
@@ -43,5 +44,36 @@ pub async fn set_person_active(app: AppHandle, id: i64, active: bool) -> AppResu
 #[tauri::command]
 pub async fn delete_person(app: AppHandle, id: i64) -> AppResult<()> {
     with_db(&app, move |c| repo::delete_person(c, id)).await?;
+    reload_matcher(&app).await
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SampleItem {
+    id: i64,
+    /// Tekislangan yuz, `data:` URL.
+    thumb: Option<String>,
+    quality: Option<f32>,
+    created_at: String,
+}
+
+#[tauri::command]
+pub async fn list_person_samples(app: AppHandle, person_id: i64) -> AppResult<Vec<SampleItem>> {
+    let rows = with_db(&app, move |c| repo::list_samples(c, person_id)).await?;
+    Ok(rows
+        .into_iter()
+        .map(|r| SampleItem {
+            id: r.id,
+            thumb: r.thumb.as_deref().map(crate::enroll::thumb_data_url),
+            quality: r.quality,
+            created_at: r.created_at,
+        })
+        .collect())
+}
+
+/// Bitta namunani o'chiradi (masalan, xira yoki boshqa odam tushib qolgan).
+#[tauri::command]
+pub async fn delete_person_sample(app: AppHandle, id: i64) -> AppResult<()> {
+    with_db(&app, move |c| repo::delete_embedding(c, id)).await?;
     reload_matcher(&app).await
 }

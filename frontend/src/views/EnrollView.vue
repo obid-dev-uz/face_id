@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { onMounted, reactive, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import FaceCapture from "../components/FaceCapture.vue";
-import { enrollApi, type EnrollState } from "../api";
+import { api, enrollApi, type EnrollState } from "../api";
+import { useBackHandler } from "../composables/useBack";
+import { toast } from "../composables/useToast";
 
 type Step = "info" | "consent" | "capture" | "review" | "done";
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
+/** Shaxs sahifasidan kelingan bo'lsa: mavjud shaxsga namuna qo'shish (ma'lumot va rozilik qadamlari yo'q). */
+const personId = route.query.person ? Number(route.query.person) : null;
 const step = ref<Step>("info");
 const form = reactive({ fullName: "", externalId: "", note: "" });
 const consent = ref(false);
@@ -24,7 +29,7 @@ async function refresh() {
 
 async function toCapture() {
   error.value = null;
-  await enrollApi.start();
+  await enrollApi.start(personId === null ? undefined : personId);
   await refresh();
   step.value = "capture";
 }
@@ -68,6 +73,11 @@ async function save(allowDuplicate = false) {
       },
       allowDuplicate,
     );
+    if (personId !== null) {
+      toast(t("person.samplesAdded", { n: state.value ? state.value.samples.length : 0 }));
+      router.replace("/persons/" + personId);
+      return;
+    }
     step.value = "done";
   } catch (e) {
     error.value = String(e);
@@ -79,11 +89,51 @@ async function save(allowDuplicate = false) {
 async function cancel() {
   if (capture.value) await capture.value.stop();
   await enrollApi.cancel().catch(() => {});
+  if (personId !== null) {
+    router.replace("/persons/" + personId);
+    return;
+  }
   form.fullName = form.externalId = form.note = "";
   consent.value = false;
   state.value = null;
   step.value = "info";
 }
+
+/** Suratga olish/ko'rib chiqishdan orqaga: olingan namunalar yo'qoladi, shuning uchun so'raladi. */
+async function stepBack() {
+  const n = state.value ? state.value.samples.length : 0;
+  if (n && !window.confirm(t("enroll.confirmDiscard", { n }))) return;
+  if (personId !== null) return cancel();
+  if (capture.value) await capture.value.stop();
+  await enrollApi.cancel().catch(() => {});
+  state.value = null;
+  step.value = "consent";
+}
+
+useBackHandler(() => {
+  if (step.value === "consent") {
+    step.value = "info";
+    return true;
+  }
+  if (step.value === "capture" || step.value === "review") {
+    stepBack();
+    return true;
+  }
+  return false;
+});
+
+onMounted(async () => {
+  if (personId === null) return;
+  try {
+    const p = await api.getPerson(personId);
+    form.fullName = p.fullName;
+    form.externalId = p.externalId || "";
+    form.note = p.note || "";
+    await toCapture();
+  } catch (e) {
+    error.value = String(e);
+  }
+});
 
 const poseLabel = (p: string | null, ring: number) =>
   p ? t("enroll.poseShort." + p) + (ring ? " +" : "") : t("enroll.gallery");
@@ -91,10 +141,11 @@ const poseLabel = (p: string | null, ring: number) =>
 
 <template>
   <section class="page">
-    <h1 class="page-title">{{ $t("enroll.title") }}</h1>
+    <h1 class="page-title">{{ personId !== null ? $t("person.addSamplesTitle", { name: form.fullName }) : $t("enroll.title") }}</h1>
+    <p v-if="error && step !== 'review'" class="error wrap">{{ error }}</p>
 
     <!-- 1. Ma'lumot -->
-    <form v-if="step === 'info'" @submit.prevent="step = 'consent'">
+    <form v-if="step === 'info' && personId === null" @submit.prevent="step = 'consent'">
       <label class="field">
         <span>{{ $t("enroll.fullName") }} *</span>
         <input v-model="form.fullName" type="text" autocomplete="off" required />

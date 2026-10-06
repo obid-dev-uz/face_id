@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { installBackButton } from "./composables/useBack";
+import { toastText } from "./composables/useToast";
+
+const router = useRouter();
+const { t } = useI18n();
+onMounted(() => installBackButton(router, () => t("app.pressAgainToExit")));
+
 const tabs = [
   { to: "/live", key: "live", icon: "M4 7h3l2-3h6l2 3h3v13H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },
   { to: "/persons", key: "persons", icon: "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a7 7 0 0 1 14 0v1M17 11a3 3 0 1 0 0-6M22 21v-1a5 5 0 0 0-4-4.9" },
@@ -11,7 +21,8 @@ const tabs = [
 <template>
   <div class="shell">
     <main class="content">
-      <router-view />
+      <!-- fullPath: /enroll va /enroll?person=… bir xil komponent, lekin holati alohida bo'lishi kerak -->
+      <router-view :key="$route.fullPath" />
     </main>
     <nav class="tabbar">
       <router-link v-for="t in tabs" :key="t.key" :to="t.to" class="tab">
@@ -19,5 +30,6 @@ const tabs = [
         <span class="tab-label">{{ $t("nav." + t.key) }}</span>
       </router-link>
     </nav>
+    <div v-if="toastText" class="toast" role="status">{{ toastText }}</div>
   </div>
 </template>

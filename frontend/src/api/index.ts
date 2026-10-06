@@ -21,6 +21,13 @@ export interface PersonInput {
   consentAt?: string | null;
 }
 
+export interface PersonSample {
+  id: number;
+  thumb: string | null;
+  quality: number | null;
+  createdAt: string;
+}
+
 export interface LogEntry {
   id: number;
   personId: number | null;
@@ -40,6 +47,8 @@ export const api = {
   updatePerson: (id: number, input: PersonInput) => invoke<Person>("update_person", { id, input }),
   setPersonActive: (id: number, active: boolean) => invoke<void>("set_person_active", { id, active }),
   deletePerson: (id: number) => invoke<void>("delete_person", { id }),
+  listPersonSamples: (personId: number) => invoke<PersonSample[]>("list_person_samples", { personId }),
+  deletePersonSample: (id: number) => invoke<void>("delete_person_sample", { id }),
 
   listLogs: (beforeId?: number, limit = 50) => invoke<LogEntry[]>("list_logs", { beforeId, limit }),
   /** `data:` URL yoki null. */
@@ -140,7 +149,8 @@ export interface EnrollState {
 }
 
 export const enrollApi = {
-  start: () => invoke<void>("enroll_start"),
+  /** `personId` — mavjud shaxsga namuna qo'shish. */
+  start: (personId?: number) => invoke<void>("enroll_start", { personId }),
   cancel: () => invoke<void>("enroll_cancel"),
   state: () => invoke<EnrollState>("enroll_state"),
   removeSample: (index: number) => invoke<void>("enroll_remove_sample", { index }),

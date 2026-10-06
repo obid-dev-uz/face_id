@@ -45,6 +45,10 @@ nokhwa = { version = "0.10.11", features = ["input-native"], optional = true }
 # Desktop kamera (nokhwa). Hozircha faqat Android ustida ishlanmoqda; Linux'da build uchun
 # libclang kerak (`apt install libclang-dev`). Yoqish: `pnpm tauri dev --features desktop-camera`
 desktop-camera = ["dep:nokhwa"]
+# WebView devtools (chrome://inspect). Tauri uni odatda debug build'da o'zi yoqadi, lekin
+# pastdagi `[profile.dev.package."*"] debug-assertions = false` buni o'chirib qo'yadi.
+# Faqat debug APK uchun: `pnpm apk:debug`. Release build'da yoqilmaydi.
+devtools = ["tauri/devtools"]
 
 # Inference (tract, align, matcher) optimallashtirilmagan holda 10–50 marta sekin: dev build
 # ham optimallashtiriladi, aks holda debug APK'dagi o'lchovlar ma'nosiz bo'ladi.

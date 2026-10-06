@@ -4,5 +4,5 @@
   "description": "Android va iOS uchun ruxsatlar",
   "platforms": ["android", "iOS"],
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:app:allow-exit"]
 }

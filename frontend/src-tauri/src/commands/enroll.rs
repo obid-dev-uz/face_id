@@ -38,10 +38,13 @@ fn with_session<T>(state: &AppState, f: impl FnOnce(&mut Session) -> AppResult<T
     }
 }
 
-/// Yangi sessiya (avvalgisi bo'lsa, tashlab yuboriladi).
+/// Yangi sessiya (avvalgisi bo'lsa, tashlab yuboriladi). `person_id` — mavjud shaxsga
+/// namuna qo'shish.
 #[tauri::command]
-pub fn enroll_start(state: State<'_, AppState>) {
-    *state.enroll.lock() = Some(Session::default());
+pub fn enroll_start(state: State<'_, AppState>, person_id: Option<i64>) {
+    let mut s = Session::default();
+    s.person_id = person_id;
+    *state.enroll.lock() = Some(s);
 }
 
 #[tauri::command]

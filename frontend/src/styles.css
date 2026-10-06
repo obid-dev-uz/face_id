@@ -111,6 +111,13 @@ button { font: inherit; color: inherit; }
   .content { flex: 1 1 auto; overflow: auto; padding: 24px 32px; }
 }
 
+/* Android Toast kabi: pastki navigatsiya ustida */
+.toast {
+  position: fixed; left: 50%; bottom: 72px; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
+  max-width: 90%; padding: 10px 16px; border-radius: 20px; background: rgba(20, 20, 20, .88); color: #fff;
+  font-size: 14px; text-align: center; -webkit-transform: translateX(-50%); transform: translateX(-50%); z-index: 20;
+}
+
 /* ---------- Sahifa elementlari ---------- */
 .page { max-width: 720px; }
 .page-title { font-size: 22px; margin: 0 0 8px; }

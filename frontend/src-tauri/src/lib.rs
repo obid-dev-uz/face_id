@@ -32,6 +32,8 @@ pub fn run() {
             commands::persons::update_person,
             commands::persons::set_person_active,
             commands::persons::delete_person,
+            commands::persons::list_person_samples,
+            commands::persons::delete_person_sample,
             commands::logs::list_logs,
             commands::logs::log_snapshot,
             commands::logs::purge_logs,
