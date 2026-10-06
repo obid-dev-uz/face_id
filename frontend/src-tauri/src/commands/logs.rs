@@ -31,6 +31,17 @@ pub async fn log_snapshot(app: AppHandle, id: i64) -> AppResult<Option<String>> 
     Ok(jpeg.map(|b| format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(b))))
 }
 
+/// Bittalab yoki tanlab o'chirish.
+#[tauri::command]
+pub async fn delete_logs(app: AppHandle, ids: Vec<i64>) -> AppResult<usize> {
+    with_db(&app, move |c| repo::delete_logs(c, &ids)).await
+}
+
+#[tauri::command]
+pub async fn clear_logs(app: AppHandle) -> AppResult<usize> {
+    with_db(&app, |c| repo::clear_logs(c)).await
+}
+
 #[tauri::command]
 pub async fn purge_logs(app: AppHandle, older_than_days: u32) -> AppResult<usize> {
     with_db(&app, move |c| repo::purge_logs_older_than(c, older_than_days)).await

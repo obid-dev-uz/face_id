@@ -343,6 +343,25 @@ pub fn get_log_snapshot(conn: &Connection, id: i64) -> AppResult<Option<Vec<u8>>
         .flatten())
 }
 
+/// Tanlangan yozuvlarni o'chiradi (yuz rasmlari bilan). O'chirilganlar sonini qaytaradi.
+pub fn delete_logs(conn: &mut Connection, ids: &[i64]) -> AppResult<usize> {
+    let tx = conn.transaction()?;
+    let mut n = 0;
+    {
+        let mut st = tx.prepare_cached("DELETE FROM recognition_logs WHERE id = ?1")?;
+        for id in ids {
+            n += st.execute([id])?;
+        }
+    }
+    tx.commit()?;
+    Ok(n)
+}
+
+/// Butun jurnal.
+pub fn clear_logs(conn: &Connection) -> AppResult<usize> {
+    Ok(conn.execute("DELETE FROM recognition_logs", [])?)
+}
+
 /// Saqlash muddati siyosati: `days` kundan eski yozuvlarni o'chiradi.
 pub fn purge_logs_older_than(conn: &Connection, days: u32) -> AppResult<usize> {
     Ok(conn.execute(
@@ -542,6 +561,19 @@ mod tests {
         assert_eq!(get_log_snapshot(&c, id).unwrap(), Some(vec![1, 2]));
         assert_eq!(get_log_snapshot(&c, 3).unwrap(), None);
         assert_eq!(get_log_snapshot(&c, 999).unwrap(), None);
+    }
+
+    #[test]
+    fn delete_selected_and_clear_logs() {
+        let mut c = open_in_memory().unwrap();
+        for i in 0..4 {
+            insert_log(&c, &NewLog { person_id: None, score: i as f32, matched: false, source: "live".into(), snapshot: Some(vec![1]) }).unwrap();
+        }
+        // Mavjud bo'lmagan id e'tiborsiz qoldiriladi
+        assert_eq!(delete_logs(&mut c, &[1, 3, 999]).unwrap(), 2);
+        assert_eq!(list_logs(&c, None, 10).unwrap().iter().map(|l| l.id).collect::<Vec<_>>(), [4, 2]);
+        assert_eq!(clear_logs(&c).unwrap(), 2);
+        assert!(list_logs(&c, None, 10).unwrap().is_empty());
     }
 
     #[test]

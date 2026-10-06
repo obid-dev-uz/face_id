@@ -25,14 +25,14 @@ export type Pose =
   | "frontal" | "left" | "upLeft" | "up" | "upRight" | "right" | "downRight" | "down" | "downLeft";
 export type EnrollHint =
   | "noFace" | "multipleFaces" | "notCentered" | "tooFar" | "tooClose" | "turnPose"
-  | "blurry" | "lowScore" | "tooDark" | "tooBright" | "differentPerson" | "hold";
+  | "blurry" | "lowScore" | "tooDark" | "tooBright" | "differentPerson";
 
 export interface EnrollFeedback {
   count: number;
   target: Pose | null;
   hint: EnrollHint | null;
-  /** Halqalardagi olingan yo'nalishlar: [ichki, tashqi]. */
-  covered: Pose[][];
+  /** Halqaning qoplangan qismlari: 72 ta, i-element — [i·5°, (i+1)·5°) (Rust `enroll::BINS`). */
+  covered: boolean[];
   captured: boolean;
   yawDeg: number | null;
   pitchDeg: number | null;

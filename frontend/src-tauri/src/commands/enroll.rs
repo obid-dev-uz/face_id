@@ -1,9 +1,8 @@
 use serde::Serialize;
-use tauri::ipc::{InvokeBody, Request};
 use tauri::{AppHandle, Manager, State};
 
 use crate::db::repo::{self, Person, PersonInput};
-use crate::enroll::{self, Duplicate, Hint, Pose, Session};
+use crate::enroll::{self, Duplicate, Pose, Session};
 use crate::error::{AppError, AppResult};
 use crate::state::{blocking, AppState};
 
@@ -12,7 +11,6 @@ use crate::state::{blocking, AppState};
 pub struct SampleView {
     thumb: String,
     pose: Option<Pose>,
-    ring: u8,
     score: f32,
 }
 
@@ -21,7 +19,8 @@ pub struct SampleView {
 pub struct EnrollState {
     samples: Vec<SampleView>,
     target: Option<Pose>,
-    required: usize,
+    /// Halqa to'liq qoplandi (namunalar soni oldindan belgilanmagan).
+    complete: bool,
     duplicate: Option<Duplicate>,
 }
 
@@ -61,7 +60,7 @@ pub async fn enroll_state(app: AppHandle) -> AppResult<EnrollState> {
             let samples = s
                 .samples
                 .iter()
-                .map(|x| SampleView { thumb: enroll::thumb_data_url(&x.thumb_png), pose: x.pose, ring: x.ring, score: x.score })
+                .map(|x| SampleView { thumb: enroll::thumb_data_url(&x.thumb_png), pose: x.pose, score: x.score })
                 .collect();
             Ok((samples, s.target(), s.duplicate(&state.matcher.read(), threshold)))
         })?;
@@ -71,9 +70,18 @@ pub async fn enroll_state(app: AppHandle) -> AppResult<EnrollState> {
                 .map(|p| Duplicate { person_id, person_name: p.full_name, score }),
             None => None,
         };
-        Ok(EnrollState { samples, target, required: enroll::TARGET_SAMPLES, duplicate })
+        Ok(EnrollState { samples, complete: target.is_none(), target, duplicate })
     })
     .await
+}
+
+/// Ekrandagi tiniq doiraning kadrdagi joyi (ekran o'lchami o'zgarganda qayta yuboriladi).
+#[tauri::command]
+pub fn enroll_set_region(state: State<'_, AppState>, region: enroll::Region) -> AppResult<()> {
+    with_session(&state, |s| {
+        s.region = Some(region);
+        Ok(())
+    })
 }
 
 #[tauri::command]
@@ -82,30 +90,6 @@ pub fn enroll_remove_sample(state: State<'_, AppState>, index: usize) -> AppResu
         s.remove(index);
         Ok(())
     })
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ImageResult {
-    accepted: bool,
-    hint: Option<Hint>,
-}
-
-/// Galereyadan rasm: `invoke("enroll_add_image", uint8Array)`.
-#[tauri::command]
-pub async fn enroll_add_image(app: AppHandle, request: Request<'_>) -> AppResult<ImageResult> {
-    let bytes = match request.body() {
-        InvokeBody::Raw(b) if !b.is_empty() => b.clone(),
-        _ => return Err(AppError::Invalid("rasm baytlari kutilgan edi".into())),
-    };
-    blocking(move || {
-        let state = app.state::<AppState>();
-        let engine = state.engine()?;
-        let img = crate::commands::engine::decode_image(&bytes)?;
-        let r = with_session(&state, |s| s.add_image(&engine, &img))?;
-        Ok(ImageResult { accepted: r.is_ok(), hint: r.err() })
-    })
-    .await
 }
 
 /// Saqlash. Bazada o'xshash shaxs bo'lsa, `allow_duplicate` bo'lmaguncha rad etiladi.

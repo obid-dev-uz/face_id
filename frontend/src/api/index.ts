@@ -56,6 +56,9 @@ export const api = {
   listLogs: (beforeId?: number, limit = 50) => invoke<LogEntry[]>("list_logs", { beforeId, limit }),
   /** `data:` URL yoki null. */
   logSnapshot: (id: number) => invoke<string | null>("log_snapshot", { id }),
+  /** Bittalab yoki tanlab o'chirish; o'chirilganlar soni. */
+  deleteLogs: (ids: number[]) => invoke<number>("delete_logs", { ids }),
+  clearLogs: () => invoke<number>("clear_logs"),
   purgeLogs: (olderThanDays: number) => invoke<number>("purge_logs", { olderThanDays }),
 
   getSettings: () => invoke<Record<string, string>>("get_settings"),
@@ -139,15 +142,14 @@ export function readFile(file: Blob): Promise<Uint8Array> {
 export interface EnrollSample {
   thumb: string;
   pose: string | null;
-  /** 0 — ichki halqa, 1 — tashqi (ko'proq burilgan). */
-  ring: number;
   score: number;
 }
 
 export interface EnrollState {
   samples: EnrollSample[];
   target: string | null;
-  required: number;
+  /** Halqa to'liq qoplandi — namunalar soni oldindan belgilanmagan. */
+  complete: boolean;
   duplicate: { personId: number; personName: string; score: number } | null;
 }
 
@@ -156,7 +158,8 @@ export const enrollApi = {
   start: (personId?: number) => invoke<void>("enroll_start", { personId }),
   cancel: () => invoke<void>("enroll_cancel"),
   state: () => invoke<EnrollState>("enroll_state"),
+  /** Ekrandagi tiniq doiraning kadrdagi joyi (ulushlarda; r — kadr kengligi ulushi). */
+  setRegion: (region: { cx: number; cy: number; r: number }) => invoke<void>("enroll_set_region", { region }),
   removeSample: (index: number) => invoke<void>("enroll_remove_sample", { index }),
-  addImage: (bytes: Uint8Array) => invoke<{ accepted: boolean; hint: string | null }>("enroll_add_image", bytes),
   commit: (input: PersonInput, allowDuplicate = false) => invoke<Person>("enroll_commit", { input, allowDuplicate }),
 };

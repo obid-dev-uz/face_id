@@ -15,27 +15,22 @@ use crate::face::{align, matcher::Matcher, quality, Face, FaceEngine};
 
 /// Yangi namuna birinchisiga kamida shuncha o'xshash bo'lishi kerak (o'sha odam ekanini tekshirish).
 const SAME_PERSON_MIN: f32 = 0.40;
-/// Yo'nalish shuncha ketma-ket kadrda barqaror bo'lsa, namuna olinadi (harakatdagi xira kadr emas).
-const STABLE_FRAMES: u32 = 2;
-/// Aylana chegaralari (to'g'ri qarashga nisbatan, gradus). Pitch landmarklardan kichikroq
+/// Burilish chegarasi (to'g'ri qarashga nisbatan, gradus). Pitch landmarklardan kichikroq
 /// chiqadi, shuning uchun uning ostonasi pastroq: (yaw/MIN_YAW, pitch/MIN_PITCH) ellips.
 const MIN_YAW: f32 = 12.0;
 const MIN_PITCH: f32 = 7.0;
 const MAX_ANGLE: f32 = 45.0;
-/// Diagonal yo'nalishlarda bosh ikki o'q bo'yicha bir vaqtda buriladi — bu qiyinroq, shuning
-/// uchun ularning sektori kengroq (to'g'ri yo'nalishlar ±15°, diagonallar 60°) va
-/// ellips bo'yicha kerakli masofa kichikroq.
-const CARDINAL_HALF_DEG: f32 = 15.0;
+/// Diagonalda bosh ikki o'q bo'yicha bir vaqtda buriladi — qiyinroq, shuning uchun
+/// kerakli masofa kichikroq (to'g'ri yo'nalishda 1, diagonalda shu qiymat, oralig'i silliq).
 const DIAGONAL_K: f32 = 0.75;
-/// Ikki halqa: ichki — boshni ozroq (MIN_YAW, MIN_PITCH), tashqi — ko'proq burish.
-/// Har bir yo'nalish ikki xil burchakda olinadi: namunalar xilma-xilroq. Tashqi halqada
-/// yuqori/past yumshoqroq: telefonga qarab turib iyakni ko'p ko'tarish/tushirish noqulay.
-const OUTER_YAW: f32 = 17.0;
-const OUTER_PITCH: f32 = 9.0;
-pub const RINGS: usize = 2;
+/// Halqa: Face ID kabi 72 ta chiziqcha (5°). Har bir namuna o'z burchagidan ±COVER_HALF_DEG
+/// atrofini qoplaydi; hammasi qoplanganda tugaydi — namunalar soni oldindan belgilanmaydi.
+pub const BINS: usize = 72;
+const BIN_DEG: f32 = 360.0 / BINS as f32;
+const COVER_HALF_DEG: f32 = 20.0;
 
-/// To'g'ri qarash va bosh aylanasi bo'ylab 8 yo'nalish (Face ID kabi: foydalanuvchi boshini
-/// aylantiradi, har bir sektordan o'tganda bittadan namuna olinadi).
+/// Namuna olingan yo'nalish (ko'rib chiqishdagi yorliq uchun): to'g'ri qarash yoki
+/// bosh aylanasidagi 8 tomondan eng yaqini.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Pose {
@@ -54,34 +49,30 @@ pub enum Pose {
 pub const DIRECTIONS: [Pose; 8] =
     [Pose::Left, Pose::UpLeft, Pose::Up, Pose::UpRight, Pose::Right, Pose::DownRight, Pose::Down, Pose::DownLeft];
 
-pub const TARGET_SAMPLES: usize = 1 + DIRECTIONS.len() * RINGS;
-
 impl Pose {
     fn is_frontal(yaw: f32, pitch: f32) -> bool {
         yaw.abs() <= MIN_YAW && pitch.abs() <= 14.0
     }
 
-    /// Nisbiy burchaklar qaysi sektor va halqaga tushadi. Markazga juda yaqin yoki haddan
-    /// tashqari burilgan bo'lsa — `None`.
-    fn direction(yaw: f32, pitch: f32) -> Option<(Pose, u8)> {
-        if yaw.abs() > MAX_ANGLE || pitch.abs() > MAX_ANGLE {
-            return None;
-        }
-        let (x, y) = (yaw / MIN_YAW, pitch / MIN_PITCH);
-        let a = y.atan2(x).to_degrees().rem_euclid(360.0);
-        let nearest = (a / 90.0).round() * 90.0;
-        let cardinal = (a - nearest).abs() <= CARDINAL_HALF_DEG;
-        let k = if cardinal { 1.0 } else { DIAGONAL_K };
-        let ring = if (yaw / OUTER_YAW).hypot(pitch / OUTER_PITCH) >= k {
-            1
-        } else if x.hypot(y) >= k {
-            0
-        } else {
-            return None;
-        };
-        let sector = if cardinal { (nearest / 45.0) as usize } else { (a / 90.0).floor() as usize * 2 + 1 };
-        Some((DIRECTIONS[sector % 8], ring))
+    fn from_angle(deg: f32) -> Pose {
+        DIRECTIONS[((deg / 45.0).round() as i64).rem_euclid(8) as usize]
     }
+}
+
+/// Nisbiy burchaklardan: aylanadagi burchak (0..360, 0° — chap) va chegaraga nisbatan
+/// masofa (≥ 1 — yetarlicha burilgan). Haddan tashqari burilgan bo'lsa — `None`.
+fn polar(yaw: f32, pitch: f32) -> Option<(f32, f32)> {
+    if yaw.abs() > MAX_ANGLE || pitch.abs() > MAX_ANGLE {
+        return None;
+    }
+    let (x, y) = (yaw / MIN_YAW, pitch / MIN_PITCH);
+    let a = y.atan2(x).to_degrees().rem_euclid(360.0);
+    let k = 1.0 - (1.0 - DIAGONAL_K) * (2.0 * a.to_radians()).sin().abs();
+    Some((a, x.hypot(y) / k))
+}
+
+fn bin_of(deg: f32) -> usize {
+    ((deg.rem_euclid(360.0) / BIN_DEG) as usize).min(BINS - 1)
 }
 
 /// Foydalanuvchiga ko'rsatiladigan maslahat (matni frontend'da).
@@ -99,7 +90,6 @@ pub enum Hint {
     TooDark,
     TooBright,
     DifferentPerson,
-    Hold,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -108,8 +98,8 @@ pub struct Feedback {
     pub count: usize,
     pub target: Option<Pose>,
     pub hint: Option<Hint>,
-    /// Halqalardagi olingan yo'nalishlar (ekranda: ichki va tashqi halqa).
-    pub covered: [Vec<Pose>; RINGS],
+    /// Halqaning qoplangan qismlari: `BINS` ta, `i`-element — `[i·5°, (i+1)·5°)`.
+    pub covered: Vec<bool>,
     /// Shu kadrda namuna olindi.
     pub captured: bool,
     /// To'g'ri qaragan namunaga nisbatan (u hali olinmagan bo'lsa — mutlaq).
@@ -124,8 +114,8 @@ pub struct Sample {
     pub thumb_png: Vec<u8>,
     pub score: f32,
     pub pose: Option<Pose>,
-    /// 0 — ichki halqa (to'g'ri qarash ham), 1 — tashqi.
-    pub ring: u8,
+    /// Aylanadagi burchak (`polar`); to'g'ri qarash uchun — `None`.
+    pub angle: Option<f32>,
     /// Olingan paytdagi mutlaq burchaklar.
     pub yaw_deg: f32,
     pub pitch_deg: f32,
@@ -144,30 +134,38 @@ pub struct Session {
     /// Mavjud shaxsga namuna qo'shilmoqda (shaxs sahifasidan); `None` — yangi shaxs.
     pub person_id: Option<i64>,
     pub samples: Vec<Sample>,
-    /// Ketma-ket mos kadrlar soni va ular qaysi yo'nalishga tegishli.
-    stable: u32,
-    pending: Option<(Pose, u8)>,
+    /// Shu kadrdagi taxminiy burchaklar (live landmarklardan): sifat tekshiruvi o'tmasa ham
+    /// ekrandagi yuz to'ri bosh burilishini ko'rsatib tursin.
+    rough_pose: Option<(f32, f32)>,
+    /// Ekrandagi doira (frontend o'lchaydi); bo'lmasa — standart joy.
+    pub region: Option<Region>,
 }
 
 impl Session {
-    fn has(&self, p: Pose, ring: u8) -> bool {
-        self.samples.iter().any(|s| s.pose == Some(p) && s.ring == ring)
+    fn has_frontal(&self) -> bool {
+        self.samples.iter().any(|s| s.pose == Some(Pose::Frontal))
     }
 
-    /// Avval to'g'ri qarash, keyin aylanadagi hali olinmagan birinchi yo'nalish;
-    /// namunalar yetarli bo'lsa — `None`.
-    pub fn target(&self) -> Option<Pose> {
-        if self.samples.len() >= TARGET_SAMPLES {
-            return None;
+    /// Namunalardan hisoblanadi: ko'rib chiqishda o'chirilgan namunaning qismi yana ochiladi.
+    pub fn covered(&self) -> Vec<bool> {
+        let mut c = vec![false; BINS];
+        let span = (COVER_HALF_DEG / BIN_DEG).round() as i64;
+        for a in self.samples.iter().filter_map(|s| s.angle) {
+            let center = bin_of(a) as i64;
+            for d in -span..=span {
+                c[(center + d).rem_euclid(BINS as i64) as usize] = true;
+            }
         }
-        if !self.has(Pose::Frontal, 0) {
+        c
+    }
+
+    /// Avval to'g'ri qarash, keyin halqaning qoplanmagan qismi; hammasi qoplansa — `None`.
+    pub fn target(&self) -> Option<Pose> {
+        if !self.has_frontal() {
             return Some(Pose::Frontal);
         }
-        (0..RINGS as u8).find_map(|r| DIRECTIONS.iter().copied().find(|&p| !self.has(p, r)))
-    }
-
-    pub fn covered(&self) -> [Vec<Pose>; RINGS] {
-        std::array::from_fn(|r| DIRECTIONS.iter().copied().filter(|&p| self.has(p, r as u8)).collect())
+        let i = self.covered().iter().position(|&c| !c)?;
+        Some(Pose::from_angle((i as f32 + 0.5) * BIN_DEG))
     }
 
     /// To'g'ri qaragan namunadagi burchaklar — boshqa pozalar shunga nisbatan.
@@ -192,8 +190,8 @@ impl Session {
             hint,
             covered: self.covered(),
             captured,
-            yaw_deg: q.map(|q| q.yaw_deg - by),
-            pitch_deg: q.map(|q| q.pitch_deg - bp),
+            yaw_deg: q.map(|q| q.yaw_deg).or(self.rough_pose.map(|p| p.0)).map(|v| v - by),
+            pitch_deg: q.map(|q| q.pitch_deg).or(self.rough_pose.map(|p| p.1)).map(|v| v - bp),
             sharpness: q.map(|q| q.sharpness),
         }
     }
@@ -203,18 +201,17 @@ impl Session {
         if self.target().is_none() {
             return self.feedback(None, false, None);
         }
-        let reject = |s: &mut Self, h: Hint, q: Option<&quality::Quality>| {
-            s.stable = 0;
-            s.feedback(Some(h), false, q)
-        };
+        let reject = |s: &mut Self, h: Hint, q: Option<&quality::Quality>| s.feedback(Some(h), false, q);
+        self.rough_pose = None;
         let face = match faces {
             [] => return reject(self, Hint::NoFace, None),
             [f] => f,
             _ => return reject(self, Hint::MultipleFaces, None),
         };
+        self.rough_pose = Some(quality::estimate_pose(&face.landmarks));
         // Bosh aylanayotganda yuz ovaldan biroz chiqadi — vertikal chegara kengroq.
-        let around = self.has(Pose::Frontal, 0);
-        if let Some(h) = placement_hint(face, img.width() as f32, img.height() as f32, around) {
+        let around = self.has_frontal();
+        if let Some(h) = placement_hint(face, img.width() as f32, img.height() as f32, around, self.region.unwrap_or_default()) {
             return reject(self, h, None);
         }
         // Yuz atrofidagi kesmada qayta aniqlash: landmarklar ancha aniqroq chiqadi.
@@ -226,25 +223,19 @@ impl Session {
         }
         let (by, bp) = self.base();
         let (yaw, pitch) = (q.yaw_deg - by, q.pitch_deg - bp);
-        let pose = if around {
-            Pose::direction(yaw, pitch).filter(|&(p, r)| !self.has(p, r))
-        } else {
-            Pose::is_frontal(yaw, pitch).then_some((Pose::Frontal, 0))
-        };
-        let Some(pose) = pose else { return reject(self, Hint::TurnPose, Some(&q)) };
-        if self.pending != Some(pose) {
-            self.pending = Some(pose);
-            self.stable = 0;
-        }
-        self.stable += 1;
-        if self.stable < STABLE_FRAMES {
-            return self.feedback(Some(Hint::Hold), false, Some(&q));
-        }
-        match self.capture(engine, &face, aligned, Some(pose), &q) {
-            Ok(true) => {
-                self.stable = 0;
-                self.feedback(None, true, Some(&q))
+        // Kutmasdan, birinchi sifatli kadrda olinadi: xira kadrni quality_hint o'zi rad etadi.
+        let (pose, angle) = if around {
+            match polar(yaw, pitch) {
+                Some((a, r)) if r >= 1.0 && !self.covered()[bin_of(a)] => (Pose::from_angle(a), Some(a)),
+                _ => return reject(self, Hint::TurnPose, Some(&q)),
             }
+        } else if Pose::is_frontal(yaw, pitch) {
+            (Pose::Frontal, None)
+        } else {
+            return reject(self, Hint::TurnPose, Some(&q));
+        };
+        match self.capture(engine, &face, aligned, Some(pose), angle, &q) {
+            Ok(true) => self.feedback(None, true, Some(&q)),
             Ok(false) => reject(self, Hint::DifferentPerson, Some(&q)),
             Err(e) => {
                 log::warn!("namuna olinmadi: {e}");
@@ -253,30 +244,14 @@ impl Session {
         }
     }
 
-    /// Galereyadagi rasm: eng katta yuz olinadi. Poza talab qilinmaydi.
-    pub fn add_image(&mut self, engine: &FaceEngine, img: &RgbImage) -> AppResult<Result<(), Hint>> {
-        if self.samples.len() >= TARGET_SAMPLES * 2 {
-            return Err(AppError::Invalid("namunalar soni yetarli".into()));
-        }
-        let faces = engine.detector.detect(img)?;
-        let Some(face) = faces.into_iter().max_by(|a, b| (a.bbox[2] * a.bbox[3]).total_cmp(&(b.bbox[2] * b.bbox[3]))) else {
-            return Ok(Err(Hint::NoFace));
-        };
-        let (aligned, _) = align::align(img, &face.landmarks);
-        let q = quality::assess(&face, &aligned, &quality::Thresholds::default());
-        if let Some(h) = quality_hint(&q) {
-            return Ok(Err(h));
-        }
-        Ok(if self.capture(engine, &face, aligned, None, &q)? { Ok(()) } else { Err(Hint::DifferentPerson) })
-    }
-
     /// `false` — namuna oldingilariga o'xshamaydi (boshqa odam).
     fn capture(
         &mut self,
         engine: &FaceEngine,
         face: &Face,
         aligned: RgbImage,
-        pose: Option<(Pose, u8)>,
+        pose: Option<Pose>,
+        angle: Option<f32>,
         q: &quality::Quality,
     ) -> AppResult<bool> {
         let embedding = engine.embedder.embed(&aligned)?;
@@ -291,8 +266,8 @@ impl Session {
             embedding,
             thumb_png,
             score: face.score,
-            pose: pose.map(|p| p.0),
-            ring: pose.map_or(0, |p| p.1),
+            pose,
+            angle,
             yaw_deg: q.yaw_deg,
             pitch_deg: q.pitch_deg,
         });
@@ -373,19 +348,35 @@ fn quality_hint(q: &quality::Quality) -> Option<Hint> {
     })
 }
 
-/// Yuz ekrandagi oval ichida bo'lishi kerak: markazga yaqin va o'rtacha kattalikda.
-/// `tilt` — bosh aylanayotgan bosqich: vertikal chegara kengroq.
-fn placement_hint(f: &Face, w: f32, h: f32, tilt: bool) -> Option<Hint> {
-    let [x, y, bw, bh] = f.bbox;
-    let (cx, cy) = (x + bw / 2.0, y + bh / 2.0);
-    let dy = if tilt { 0.26 } else { 0.18 };
-    if (cx - w / 2.0).abs() > w * 0.18 || (cy - h * 0.45).abs() > h * dy {
+/// Ekrandagi tiniq doiraning kadrdagi joyi: markaz — kadr kengligi/balandligi ulushida,
+/// radius — kadr kengligi ulushida. Doira o'lchami telefon ekraniga bog'liq, shuning uchun
+/// frontend uni hisoblab yuboradi (`enroll_set_region`).
+#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
+pub struct Region {
+    pub cx: f32,
+    pub cy: f32,
+    pub r: f32,
+}
+
+impl Default for Region {
+    fn default() -> Self {
+        Self { cx: 0.5, cy: 0.45, r: 0.3 }
+    }
+}
+
+/// Yuz doira ichida bo'lishi kerak: markazi doira markaziga yaqin, kattaligi doiraga mos.
+/// `tilt` — bosh aylanayotgan bosqich: burilganda yuz ramkasi siljiydi, chegara kengroq.
+fn placement_hint(f: &Face, w: f32, h: f32, tilt: bool, region: Region) -> Option<Hint> {
+    let [x, y, bw, _] = f.bbox;
+    let rc = region.r * w;
+    let (dx, dy) = (x + bw / 2.0 - region.cx * w, y + f.bbox[3] / 2.0 - region.cy * h);
+    if dx.hypot(dy) > rc * if tilt { 0.5 } else { 0.35 } {
         return Some(Hint::NotCentered);
     }
-    if bw < w * 0.22 {
+    if bw < rc * 0.9 {
         return Some(Hint::TooFar);
     }
-    if bw > w * 0.8 || bh > h * 0.75 {
+    if bw > rc * 2.1 {
         return Some(Hint::TooClose);
     }
     None
@@ -402,45 +393,45 @@ mod tests {
     #[test]
     fn placement_checks() {
         let (w, h) = (480.0, 640.0);
-        assert_eq!(placement_hint(&face(240.0, 290.0, 200.0), w, h, false), None);
-        assert_eq!(placement_hint(&face(60.0, 290.0, 200.0), w, h, false), Some(Hint::NotCentered));
-        assert_eq!(placement_hint(&face(240.0, 290.0, 60.0), w, h, false), Some(Hint::TooFar));
-        assert_eq!(placement_hint(&face(240.0, 290.0, 420.0), w, h, false), Some(Hint::TooClose));
-        // Iyak ko'tarilganda yuz yuqoriga siljiydi: tilt rejimida ruxsat
-        assert_eq!(placement_hint(&face(240.0, 130.0, 200.0), w, h, false), Some(Hint::NotCentered));
-        assert_eq!(placement_hint(&face(240.0, 130.0, 200.0), w, h, true), None);
+        let r = Region::default(); // markaz (240, 288), radius 144 px
+        assert_eq!(placement_hint(&face(240.0, 290.0, 200.0), w, h, false, r), None);
+        assert_eq!(placement_hint(&face(60.0, 290.0, 200.0), w, h, false, r), Some(Hint::NotCentered));
+        assert_eq!(placement_hint(&face(240.0, 290.0, 60.0), w, h, false, r), Some(Hint::TooFar));
+        assert_eq!(placement_hint(&face(240.0, 290.0, 420.0), w, h, false, r), Some(Hint::TooClose));
+        // Bosh aylanayotganda yuz ramkasi siljiydi: tilt rejimida kengroq
+        assert_eq!(placement_hint(&face(240.0, 215.0, 200.0), w, h, false, r), Some(Hint::NotCentered));
+        assert_eq!(placement_hint(&face(240.0, 215.0, 200.0), w, h, true, r), None);
+        // Ekrandagi doira boshqa joyda va kichikroq bo'lsa — shunga nisbatan
+        let small = Region { cx: 0.5, cy: 0.35, r: 0.2 }; // markaz (240, 224), radius 96 px
+        assert_eq!(placement_hint(&face(240.0, 290.0, 200.0), w, h, false, small), Some(Hint::NotCentered));
+        assert_eq!(placement_hint(&face(240.0, 226.0, 150.0), w, h, false, small), None);
+        assert_eq!(placement_hint(&face(240.0, 226.0, 220.0), w, h, false, small), Some(Hint::TooClose));
     }
 
     #[test]
-    fn directions_around_circle() {
-        use Pose::*;
+    fn polar_thresholds() {
         assert!(Pose::is_frontal(3.0, -4.0) && !Pose::is_frontal(20.0, 0.0));
-        assert_eq!(Pose::direction(3.0, 2.0), None, "markazga juda yaqin");
-        assert_eq!(Pose::direction(60.0, 0.0), None, "haddan tashqari burilgan");
-        assert_eq!(Pose::direction(15.0, 1.0), Some((Left, 0)));
-        assert_eq!(Pose::direction(-15.0, 1.0), Some((Right, 0)));
-        assert_eq!(Pose::direction(1.0, 8.0), Some((Up, 0)));
-        assert_eq!(Pose::direction(1.0, -8.0), Some((Down, 0)));
-        assert_eq!(Pose::direction(8.0, 4.0), Some((UpLeft, 0)));
-        assert_eq!(Pose::direction(-8.0, 4.0), Some((UpRight, 0)));
-        assert_eq!(Pose::direction(-8.0, -4.0), Some((DownRight, 0)));
-        assert_eq!(Pose::direction(8.0, -4.0), Some((DownLeft, 0)));
-        // Diagonal: kamroq burilish ham yetadi (to'g'ri yo'nalish uchun bu hali markaz)
-        assert_eq!(Pose::direction(9.0, 3.0), Some((UpLeft, 0)));
-        assert_eq!(Pose::direction(9.0, 0.5), None);
-        // Tashqi halqa: ko'proq burilish
-        assert_eq!(Pose::direction(-30.0, 1.0), Some((Right, 1)));
-        assert_eq!(Pose::direction(18.0, 1.0), Some((Left, 1)));
-        assert_eq!(Pose::direction(16.0, 1.0), Some((Left, 0)));
-        assert_eq!(Pose::direction(1.0, 9.5), Some((Up, 1)));
-        assert_eq!(Pose::direction(1.0, 8.0), Some((Up, 0)));
-        assert_eq!(Pose::direction(-12.0, -7.0), Some((DownRight, 1)));
+        assert_eq!(polar(60.0, 0.0), None, "haddan tashqari burilgan");
+        let r = |y, p| polar(y, p).unwrap().1;
+        assert!(r(3.0, 2.0) < 1.0, "markazga juda yaqin");
+        assert!(r(12.5, 0.0) >= 1.0 && r(-12.5, 0.0) >= 1.0, "chap/o'ng ~12°");
+        assert!(r(0.0, 7.5) >= 1.0 && r(0.0, -7.5) >= 1.0, "yuqori/past ~7°");
+        // Diagonal: kamroq burilish ham yetadi
+        assert!(r(7.0, 4.2) >= 1.0 && r(7.0, 4.2) < 1.2);
+        assert!(r(9.0, 0.5) < 1.0);
+        // Burchak: 0° — chap, 90° — yuqori, 180° — o'ng
+        let a = |y, p| Pose::from_angle(polar(y, p).unwrap().0);
+        assert_eq!(a(20.0, 0.0), Pose::Left);
+        assert_eq!(a(0.0, 10.0), Pose::Up);
+        assert_eq!(a(-20.0, 0.0), Pose::Right);
+        assert_eq!(a(0.0, -10.0), Pose::Down);
+        assert_eq!(a(-10.0, -6.0), Pose::DownRight);
     }
 
     fn sample_at(v: &[f32], pose: Option<Pose>, yaw_deg: f32, pitch_deg: f32) -> Sample {
         let mut v = v.to_vec();
         crate::face::matcher::l2_normalize(&mut v);
-        Sample { embedding: v, thumb_png: vec![1, 2, 3], score: 0.9, pose, ring: 0, yaw_deg, pitch_deg }
+        Sample { embedding: v, thumb_png: vec![1, 2, 3], score: 0.9, pose, angle: None, yaw_deg, pitch_deg }
     }
 
     fn sample(v: &[f32]) -> Sample {
@@ -479,33 +470,34 @@ mod tests {
         assert_eq!(repo::list_persons(&conn, None, true).unwrap().len(), 1);
     }
 
+    fn at_angle(deg: f32) -> Sample {
+        let mut s = sample_at(&[1.0, 0.0], Some(Pose::from_angle(deg)), 0.0, 0.0);
+        s.angle = Some(deg);
+        s
+    }
+
     #[test]
-    fn target_follows_missing_poses() {
+    fn coverage_completes_ring_with_any_count() {
         let mut s = Session::default();
         assert_eq!(s.target(), Some(Pose::Frontal));
-        s.samples.push(sample_at(&[1.0, 0.0], Some(Pose::Frontal), 0.0, 0.0));
-        s.samples.push(sample_at(&[1.0, 0.0], Some(Pose::Left), 20.0, 0.0));
-        s.samples.push(sample_at(&[1.0, 0.0], Some(Pose::Up), 0.0, 10.0));
-        assert_eq!(s.target(), Some(Pose::UpLeft));
-        assert_eq!(s.covered(), [vec![Pose::Left, Pose::Up], vec![]]);
-        // Chap namuna o'chirilsa, u yana bo'sh sektor
-        s.remove(1);
-        assert_eq!(s.target(), Some(Pose::Left));
-        assert_eq!(s.covered(), [vec![Pose::Up], vec![]]);
-        // Ichki halqa to'lgach, tashqisi so'raladi
-        for p in DIRECTIONS {
-            if p != Pose::Up {
-                s.samples.push(sample_at(&[1.0, 0.0], Some(p), 0.0, 0.0));
-            }
+        s.samples.push(sample(&[1.0, 0.0]));
+        assert!(s.covered().iter().all(|&c| !c), "to'g'ri qarash halqani qoplamaydi");
+        // Bitta namuna ±20° ni qoplaydi: 0° atrofida 355°..20°
+        s.samples.push(at_angle(0.0));
+        let c = s.covered();
+        assert!(c[0] && c[4] && c[BINS - 4]);
+        assert!(!c[5] && !c[BINS - 5]);
+        assert_eq!(s.target(), Some(Pose::from_angle(27.5)));
+        // 40° qadam bilan 9 ta namuna — halqa to'ldi, namunalar soni muhim emas
+        for i in 1..9 {
+            s.samples.push(at_angle(i as f32 * 40.0));
         }
-        assert_eq!(s.target(), Some(Pose::Left));
-        let mut outer = sample_at(&[1.0, 0.0], Some(Pose::Left), 30.0, 0.0);
-        outer.ring = 1;
-        s.samples.push(outer);
-        assert_eq!(s.target(), Some(Pose::UpLeft));
-        assert_eq!(s.covered()[1], vec![Pose::Left]);
-        s.samples = vec![sample(&[1.0, 0.0]); TARGET_SAMPLES];
+        assert!(s.covered().iter().all(|&c| c));
         assert_eq!(s.target(), None);
+        // Ko'rib chiqishda namuna o'chirilsa, uning qismi yana ochiladi
+        s.remove(3);
+        assert!(s.target().is_some());
+        assert!(!s.covered()[bin_of(80.0)]);
     }
 
     #[test]
@@ -515,7 +507,9 @@ mod tests {
         s.samples.push(sample_at(&[1.0, 0.0], Some(Pose::Frontal), 2.0, -8.0));
         let (by, bp) = s.base();
         // Mutlaq 0° — chegaradan past, lekin nisbiy +8° — yuqoriga qaragan
-        assert_eq!(Pose::direction(2.0, 0.0), None);
-        assert_eq!(Pose::direction(2.0 - by, 0.0 - bp), Some((Pose::Up, 0)));
+        assert!(polar(2.0, 0.0).unwrap().1 < 1.0);
+        let (a, r) = polar(2.0 - by, 0.0 - bp).unwrap();
+        assert!(r >= 1.0);
+        assert_eq!(Pose::from_angle(a), Pose::Up);
     }
 }

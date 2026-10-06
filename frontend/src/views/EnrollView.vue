@@ -7,7 +7,8 @@ import { api, enrollApi, type EnrollState } from "../api";
 import { useBackHandler } from "../composables/useBack";
 import { toast } from "../composables/useToast";
 
-type Step = "info" | "consent" | "capture" | "review" | "done";
+// Rozilik sahifasi yo'q: ma'lumotdan keyin darhol suratga olish (foydalanuvchi talabi).
+type Step = "info" | "capture" | "review" | "done";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -16,11 +17,9 @@ const route = useRoute();
 const personId = route.query.person ? Number(route.query.person) : null;
 const step = ref<Step>("info");
 const form = reactive({ fullName: "", externalId: "", note: "" });
-const consent = ref(false);
 const state = ref<EnrollState | null>(null);
 const busy = ref(false);
 const error = ref<string | null>(null);
-const notice = ref<string | null>(null);
 const capture = ref<InstanceType<typeof FaceCapture> | null>(null);
 
 async function refresh() {
@@ -34,18 +33,15 @@ async function toCapture() {
   step.value = "capture";
 }
 
+/** Hammasi olinganda yakun animatsiyasi (yashil doira) ko'rinib tursin, keyin ko'rib chiqish. */
+const SUCCESS_MS = 1400;
+
 async function onCaptured() {
   await refresh();
-  if (state.value && state.value.samples.length >= state.value.required) await toReview();
-}
-
-async function onAddImage(bytes: Uint8Array) {
-  try {
-    const r = await enrollApi.addImage(bytes);
-    notice.value = r.accepted ? t("enroll.imageAccepted") : t("enroll.hint." + (r.hint || "noFace"));
-    await refresh();
-  } catch (e) {
-    notice.value = String(e);
+  if (state.value && state.value.complete) {
+    setTimeout(() => {
+      if (step.value === "capture") toReview();
+    }, SUCCESS_MS);
   }
 }
 
@@ -69,7 +65,8 @@ async function save(allowDuplicate = false) {
         fullName: form.fullName,
         externalId: form.externalId || null,
         note: form.note || null,
-        consentAt: new Date().toISOString(),
+        // Rozilik ilovada so'ralmaydi — sana qayd etilmaydi (shaxs sahifasida "qayd etilmagan").
+        consentAt: null,
       },
       allowDuplicate,
     );
@@ -94,7 +91,6 @@ async function cancel() {
     return;
   }
   form.fullName = form.externalId = form.note = "";
-  consent.value = false;
   state.value = null;
   step.value = "info";
 }
@@ -107,14 +103,10 @@ async function stepBack() {
   if (capture.value) await capture.value.stop();
   await enrollApi.cancel().catch(() => {});
   state.value = null;
-  step.value = "consent";
+  step.value = "info";
 }
 
 useBackHandler(() => {
-  if (step.value === "consent") {
-    step.value = "info";
-    return true;
-  }
   if (step.value === "capture" || step.value === "review") {
     stepBack();
     return true;
@@ -135,17 +127,17 @@ onMounted(async () => {
   }
 });
 
-const poseLabel = (p: string | null, ring: number) =>
-  p ? t("enroll.poseShort." + p) + (ring ? " +" : "") : t("enroll.gallery");
+const poseLabel = (p: string | null) => (p ? t("enroll.poseShort." + p) : "");
 </script>
 
 <template>
   <section class="page">
-    <h1 class="page-title">{{ personId !== null ? $t("person.addSamplesTitle", { name: form.fullName }) : $t("enroll.title") }}</h1>
+    <!-- Suratga olishda sarlavha yo'q: ekran to'liq Face ID paneliga beriladi -->
+    <h1 v-if="step !== 'capture'" class="page-title">{{ personId !== null ? $t("person.addSamplesTitle", { name: form.fullName }) : $t("enroll.title") }}</h1>
     <p v-if="error && step !== 'review'" class="error wrap">{{ error }}</p>
 
     <!-- 1. Ma'lumot -->
-    <form v-if="step === 'info' && personId === null" @submit.prevent="step = 'consent'">
+    <form v-if="step === 'info' && personId === null" @submit.prevent="toCapture">
       <label class="field">
         <span>{{ $t("enroll.fullName") }} *</span>
         <input v-model="form.fullName" type="text" autocomplete="off" required />
@@ -161,34 +153,19 @@ const poseLabel = (p: string | null, ring: number) =>
       <button type="submit" class="btn primary" :disabled="!form.fullName.trim()">{{ $t("enroll.next") }}</button>
     </form>
 
-    <!-- 2. Rozilik -->
-    <div v-else-if="step === 'consent'">
-      <p>{{ $t("enroll.consentText", { name: form.fullName.trim() }) }}</p>
-      <label class="check">
-        <input v-model="consent" type="checkbox" />
-        <span>{{ $t("enroll.consentCheck") }}</span>
-      </label>
-      <button type="button" class="btn primary" :disabled="!consent" @click="toCapture">{{ $t("enroll.next") }}</button>
-      <button type="button" class="btn spaced" @click="step = 'info'">{{ $t("enroll.back") }}</button>
-    </div>
-
-    <!-- 3. Suratga olish -->
+    <!-- 2. Suratga olish -->
     <div v-else-if="step === 'capture' && state">
-      <FaceCapture ref="capture" :required="state.required" @captured="onCaptured" @add-image="onAddImage" />
-      <p v-if="notice" class="muted center">{{ notice }}</p>
-      <button type="button" class="btn spaced" :disabled="!state.samples.length" @click="toReview">
-        {{ $t("enroll.reviewNow", { n: state.samples.length }) }}
-      </button>
-      <button type="button" class="btn spaced" @click="cancel">{{ $t("enroll.cancel") }}</button>
+      <!-- Ko'rib chiqish halqa to'lganda o'zi ochiladi; bekor qilish — paneldagi ✕ -->
+      <FaceCapture ref="capture" @captured="onCaptured" @close="stepBack" />
     </div>
 
-    <!-- 4. Ko'rib chiqish -->
+    <!-- 3. Ko'rib chiqish -->
     <div v-else-if="step === 'review' && state">
       <p class="muted">{{ form.fullName }} · {{ $t("enroll.samples", { n: state.samples.length }) }}</p>
       <div class="thumbs">
         <div v-for="(s, i) in state.samples" :key="i" class="thumb">
           <img :src="s.thumb" alt="" />
-          <span class="thumb-label">{{ poseLabel(s.pose, s.ring) }}</span>
+          <span class="thumb-label">{{ poseLabel(s.pose) }}</span>
           <button type="button" class="thumb-del" :aria-label="$t('enroll.remove')" @click="removeSample(i)">×</button>
         </div>
       </div>
@@ -208,7 +185,7 @@ const poseLabel = (p: string | null, ring: number) =>
       <button type="button" class="btn spaced" @click="cancel">{{ $t("enroll.cancel") }}</button>
     </div>
 
-    <!-- 5. Tayyor -->
+    <!-- 4. Tayyor -->
     <div v-else-if="step === 'done'">
       <p class="success">{{ $t("enroll.saved", { name: form.fullName }) }}</p>
       <button type="button" class="btn primary" @click="router.push('/persons')">{{ $t("nav.persons") }}</button>
@@ -224,10 +201,7 @@ const poseLabel = (p: string | null, ring: number) =>
   display: block; width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; color: inherit;
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
 }
-.check { display: flex; align-items: flex-start; margin: 16px 0; }
-.check input { width: 22px; height: 22px; margin: 2px 10px 0 0; flex: 0 0 auto; }
 .spaced { margin-top: 8px; }
-.center { text-align: center; }
 .thumbs { margin: 0 -4px 12px; }
 .thumb { position: relative; display: inline-block; width: 30%; margin: 4px 1.5%; vertical-align: top; }
 .thumb img { display: block; width: 100%; border-radius: 8px; }
