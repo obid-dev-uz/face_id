@@ -5,6 +5,10 @@ pub mod align;
 pub mod backend;
 pub mod detector;
 pub mod embedder;
+#[cfg(test)]
+mod golden;
+#[cfg(test)]
+mod bench;
 pub mod matcher;
 pub mod quality;
 
@@ -129,11 +133,24 @@ fn ms(t0: Instant) -> f64 {
 mod tests {
     use super::*;
 
+    /// Modellar papkasi: `KHOFACE_MODELS` (telefonda: scripts/android-test.sh) yoki loyihadagi resources.
+    pub(crate) fn models_dir() -> std::path::PathBuf {
+        std::env::var_os("KHOFACE_MODELS")
+            .map(Into::into)
+            .unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/models"))
+    }
+
     /// Haqiqiy modellar bilan; modellar yuklanmagan bo'lsa (scripts/fetch-models.sh) o'tkazib yuboriladi.
-    fn engine() -> Option<FaceEngine> {
-        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/models");
-        let yunet = std::fs::read(dir.join("face_detection_yunet_2023mar.onnx")).ok()?;
-        let sface = std::fs::read(dir.join("face_recognition_sface_2021dec.onnx")).ok()?;
+    /// `KHOFACE_REQUIRE_MODELS=1` bo'lsa (qurilmadagi test), modelsiz test yiqiladi.
+    pub(crate) fn engine() -> Option<FaceEngine> {
+        let dir = models_dir();
+        let read = |name: &str| match std::fs::read(dir.join(name)) {
+            Ok(b) => Some(b),
+            Err(e) if std::env::var_os("KHOFACE_REQUIRE_MODELS").is_some() => panic!("{name}: {e}"),
+            Err(_) => None,
+        };
+        let yunet = read("face_detection_yunet_2023mar.onnx")?;
+        let sface = read("face_recognition_sface_2021dec.onnx")?;
         Some(FaceEngine::load(&yunet, &sface, 320, 256).unwrap())
     }
 
