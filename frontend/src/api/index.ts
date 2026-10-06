@@ -139,7 +139,6 @@ export const enrollApi = {
   start: () => invoke<void>("enroll_start"),
   cancel: () => invoke<void>("enroll_cancel"),
   state: () => invoke<EnrollState>("enroll_state"),
-  skipPose: () => invoke<void>("enroll_skip_pose"),
   removeSample: (index: number) => invoke<void>("enroll_remove_sample", { index }),
   addImage: (bytes: Uint8Array) => invoke<{ accepted: boolean; hint: string | null }>("enroll_add_image", bytes),
   commit: (input: PersonInput, allowDuplicate = false) => invoke<Person>("enroll_commit", { input, allowDuplicate }),

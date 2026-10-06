@@ -12,7 +12,8 @@ export interface LiveFace {
   landmarks: [number, number][];
 }
 
-export type Pose = "frontal" | "left" | "right" | "up" | "down";
+export type Pose =
+  | "frontal" | "left" | "upLeft" | "up" | "upRight" | "right" | "downRight" | "down" | "downLeft";
 export type EnrollHint =
   | "noFace" | "multipleFaces" | "notCentered" | "tooFar" | "tooClose" | "turnPose"
   | "blurry" | "lowScore" | "tooDark" | "tooBright" | "differentPerson" | "hold";
@@ -21,6 +22,8 @@ export interface EnrollFeedback {
   count: number;
   target: Pose | null;
   hint: EnrollHint | null;
+  /** Aylanadagi olingan yo'nalishlar. */
+  covered: Pose[];
   captured: boolean;
   yawDeg: number | null;
   pitchDeg: number | null;

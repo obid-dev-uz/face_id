@@ -44,10 +44,6 @@ async function onAddImage(bytes: Uint8Array) {
   }
 }
 
-async function onSkip() {
-  await enrollApi.skipPose();
-}
-
 async function toReview() {
   if (capture.value) await capture.value.stop();
   await refresh();
@@ -126,7 +122,7 @@ const poseLabel = (p: string | null) => (p ? t("enroll.poseShort." + p) : t("enr
 
     <!-- 3. Suratga olish -->
     <div v-else-if="step === 'capture' && state">
-      <FaceCapture ref="capture" :required="state.required" @captured="onCaptured" @add-image="onAddImage" @skip="onSkip" />
+      <FaceCapture ref="capture" :required="state.required" @captured="onCaptured" @add-image="onAddImage" />
       <p v-if="notice" class="muted center">{{ notice }}</p>
       <button type="button" class="btn spaced" :disabled="!state.samples.length" @click="toReview">
         {{ $t("enroll.reviewNow", { n: state.samples.length }) }}

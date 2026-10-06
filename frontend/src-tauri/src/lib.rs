@@ -47,7 +47,6 @@ pub fn run() {
             commands::enroll::enroll_start,
             commands::enroll::enroll_cancel,
             commands::enroll::enroll_state,
-            commands::enroll::enroll_skip_pose,
             commands::enroll::enroll_remove_sample,
             commands::enroll::enroll_add_image,
             commands::enroll::enroll_commit,

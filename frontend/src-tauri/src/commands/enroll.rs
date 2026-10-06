@@ -73,14 +73,6 @@ pub async fn enroll_state(app: AppHandle) -> AppResult<EnrollState> {
 }
 
 #[tauri::command]
-pub fn enroll_skip_pose(state: State<'_, AppState>) -> AppResult<()> {
-    with_session(&state, |s| {
-        s.skip_pose();
-        Ok(())
-    })
-}
-
-#[tauri::command]
 pub fn enroll_remove_sample(state: State<'_, AppState>, index: usize) -> AppResult<()> {
     with_session(&state, |s| {
         s.remove(index);
