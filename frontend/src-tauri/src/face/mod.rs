@@ -78,6 +78,29 @@ impl FaceEngine {
         })
     }
 
+    /// Yuz atrofidagi kvadrat kesmani live detektorga berib, aniqroq landmarklar oladi
+    /// (160 px'li butun kadrdagi landmarklar tekislash uchun juda taxminiy).
+    pub fn refine(&self, img: &RgbImage, f: &Face) -> Option<Face> {
+        let [x, y, bw, bh] = f.bbox;
+        let side = (bw.max(bh) * 1.8).min(img.width().min(img.height()) as f32);
+        let x0 = (x + bw / 2.0 - side / 2.0).clamp(0.0, img.width() as f32 - side) as u32;
+        let y0 = (y + bh / 2.0 - side / 2.0).clamp(0.0, img.height() as f32 - side) as u32;
+        let crop = image::imageops::crop_imm(img, x0, y0, side as u32, side as u32).to_image();
+        let mut best = self
+            .live_detector
+            .detect(&crop)
+            .ok()?
+            .into_iter()
+            .max_by(|a, b| (a.bbox[2] * a.bbox[3]).total_cmp(&(b.bbox[2] * b.bbox[3])))?;
+        best.bbox[0] += x0 as f32;
+        best.bbox[1] += y0 as f32;
+        for p in &mut best.landmarks {
+            p[0] += x0 as f32;
+            p[1] += y0 as f32;
+        }
+        Some(best)
+    }
+
     /// Rasmdagi barcha yuzlarni aniqlab, har biri uchun embedding hisoblaydi.
     pub fn analyze(&self, img: &RgbImage, max_faces: usize) -> anyhow::Result<(Vec<Analyzed>, Timings)> {
         let mut t = Timings::default();

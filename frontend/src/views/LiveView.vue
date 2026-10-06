@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useCamera } from "../composables/useCamera";
+
+const { t } = useI18n();
 
 const cam = useCamera();
 onMounted(() => cam.start());
@@ -9,17 +12,27 @@ onMounted(() => cam.start());
 const boxes = computed(() => {
   const h = cam.header.value;
   if (!h) return [];
-  return h.faces.map((f) => {
-    const [x, y, w, bh] = f.bbox;
+  const place = (bbox: [number, number, number, number]) => {
+    const [x, y, w, bh] = bbox;
     const left = h.mirrored ? h.width - x - w : x;
     return {
       left: (left / h.width) * 100 + "%",
       top: (y / h.height) * 100 + "%",
       width: (w / h.width) * 100 + "%",
       height: (bh / h.height) * 100 + "%",
-      score: f.score,
     };
-  });
+  };
+  // Modellar hali yuklanmagan bo'lsa treklar yo'q — faqat aniqlash ramkalari.
+  if (!h.tracks) return h.faces.map((f, i) => ({ key: "f" + i, style: place(f.bbox), status: "pending", label: "" }));
+  return h.tracks.map((tr) => ({
+    key: "t" + tr.id,
+    style: place(tr.bbox),
+    status: tr.status,
+    label:
+      tr.status === "known"
+        ? (tr.name || "#" + tr.personId) + (tr.score !== null ? " · " + tr.score.toFixed(2) : "")
+        : t(tr.status === "unknown" ? "live.unknown" : "live.pending"),
+  }));
 });
 </script>
 
@@ -52,7 +65,9 @@ const boxes = computed(() => {
           @load="cam.frameShown"
         />
         <div v-else class="placeholder muted">{{ $t("camera.starting") }}</div>
-        <div v-for="(b, i) in boxes" :key="i" class="box" :style="b" />
+        <div v-for="b in boxes" :key="b.key" class="box" :class="b.status" :style="b.style">
+          <span v-if="b.label" class="label">{{ b.label }}</span>
+        </div>
       </div>
 
       <div class="controls">
@@ -75,6 +90,15 @@ const boxes = computed(() => {
 .viewer img.mirrored { -webkit-transform: scaleX(-1); transform: scaleX(-1); }
 .placeholder { line-height: 1.4; padding: 80px 16px; text-align: center; color: #98a2b3; }
 .box { position: absolute; border: 2px solid #f79009; border-radius: 6px; }
+.box.known { border-color: #12b76a; }
+.box.unknown { border-color: #f04438; }
+.label {
+  position: absolute; left: -2px; bottom: 100%; max-width: 220px; margin-bottom: 2px; padding: 2px 6px;
+  border-radius: 4px; background: #f79009; color: #fff; font-size: 12px; line-height: 16px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.known .label { background: #12b76a; }
+.unknown .label { background: #f04438; }
 .controls { margin-top: 12px; }
 .stats { font-size: 12px; margin-top: 8px; }
 .notice { padding: 24px 0; }

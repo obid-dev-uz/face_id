@@ -1,7 +1,7 @@
 export default {
   nav: { live: "Камера", persons: "Люди", enroll: "Добавить", logs: "Журнал", settings: "Настройки" },
   placeholder: "Этот раздел появится на следующих этапах.",
-  settings: { data: "Данные", backup: "Создать резервную копию", backupDone: "Сохранено", language: "Язык", about: "О приложении", loading: "Загрузка…" },
+  settings: { recognition: "Распознавание", threshold: "Порог сходства", thresholdHint: "Выше — меньше ошибочных совпадений, но больше «Неизвестный».", cooldown: "Интервал повторной записи одного человека", seconds: "{n} с", minutes: "{n} мин", data: "Данные", backup: "Создать резервную копию", backupDone: "Сохранено", language: "Язык", about: "О приложении", loading: "Загрузка…" },
   enroll: {
     title: "Новый человек",
     fullName: "Имя и фамилия",
@@ -50,6 +50,8 @@ export default {
     delete: "Удалить",
     confirmDelete: "Удалить {name} и все образцы?",
   },
+  live: { unknown: "Неизвестный", pending: "Распознавание…" },
+  logs: { empty: "Журнал пока пуст. Здесь появятся узнанные и неизвестные лица со страницы камеры.", loadMore: "Загрузить ещё", unknown: "Неизвестное лицо" },
   camera: {
     starting: "Запуск камеры…",
     deniedTitle: "Нужен доступ к камере",

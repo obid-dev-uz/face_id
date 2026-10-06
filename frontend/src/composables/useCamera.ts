@@ -12,6 +12,15 @@ export interface LiveFace {
   landmarks: [number, number][];
 }
 
+export interface TrackView {
+  id: number;
+  bbox: [number, number, number, number];
+  status: "pending" | "known" | "unknown";
+  personId: number | null;
+  name: string | null;
+  score: number | null;
+}
+
 export type Pose =
   | "frontal" | "left" | "upLeft" | "up" | "upRight" | "right" | "downRight" | "down" | "downLeft";
 export type EnrollHint =
@@ -35,6 +44,8 @@ export interface FrameHeader {
   height: number;
   mirrored: boolean;
   faces: LiveFace[];
+  /** Live rejimda tanish holati (bo'lmasa — faqat aniqlash ramkalari). */
+  tracks?: TrackView[];
   enroll?: EnrollFeedback;
   fps: number;
   detectMs: number;

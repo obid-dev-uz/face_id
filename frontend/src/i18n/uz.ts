@@ -1,7 +1,7 @@
 export default {
   nav: { live: "Kamera", persons: "Shaxslar", enroll: "Qo'shish", logs: "Jurnal", settings: "Sozlamalar" },
   placeholder: "Bu bo'lim keyingi bosqichlarda tayyor bo'ladi.",
-  settings: { data: "Ma'lumotlar", backup: "Zaxira nusxa yaratish", backupDone: "Saqlandi", language: "Til", about: "Ilova haqida", loading: "Yuklanmoqda…" },
+  settings: { recognition: "Tanish", threshold: "O'xshashlik chegarasi", thresholdHint: "Yuqoriroq — boshqa odamni adashib tanish kamayadi, lekin \"Noma'lum\" ko'payadi.", cooldown: "Bir shaxsni jurnalga qayta yozish oralig'i", seconds: "{n} s", minutes: "{n} daq", data: "Ma'lumotlar", backup: "Zaxira nusxa yaratish", backupDone: "Saqlandi", language: "Til", about: "Ilova haqida", loading: "Yuklanmoqda…" },
   enroll: {
     title: "Yangi shaxs",
     fullName: "Ism va familiya",
@@ -50,6 +50,8 @@ export default {
     delete: "O'chirish",
     confirmDelete: "{name} va uning barcha namunalari o'chirilsinmi?",
   },
+  live: { unknown: "Noma'lum", pending: "Aniqlanmoqda…" },
+  logs: { empty: "Jurnal hozircha bo'sh. Kamera sahifasida tanilgan va noma'lum yuzlar shu yerga yoziladi.", loadMore: "Yana yuklash", unknown: "Noma'lum shaxs" },
   camera: {
     starting: "Kamera ishga tushmoqda…",
     deniedTitle: "Kameraga ruxsat kerak",

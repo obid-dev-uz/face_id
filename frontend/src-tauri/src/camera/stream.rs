@@ -27,6 +27,9 @@ struct Header<'a> {
     /// Old kamera: UI'da ko'zgu kabi ko'rsatiladi (ramkalar ham).
     mirrored: bool,
     faces: &'a [Face],
+    /// Live rejimda: treklar va tanish holati.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    tracks: Vec<crate::recognize::TrackView>,
     /// Ro'yxatga olish rejimida: namuna olish holati.
     #[serde(skip_serializing_if = "Option::is_none")]
     enroll: Option<crate::enroll::Feedback>,
@@ -46,6 +49,7 @@ pub struct Stream {
     /// Kadrlar ro'yxatga olish sessiyasiga ham beriladi.
     enroll_mode: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
+    pub recognizer: crate::recognize::Recognizer,
 }
 
 impl Stream {
@@ -60,11 +64,15 @@ impl Stream {
         self.ready.store(true, Ordering::Release);
         self.enroll_mode.store(enroll, Ordering::Release);
         let (running, ready, bus, enroll) = (self.running.clone(), self.ready.clone(), self.bus.clone(), self.enroll_mode.clone());
+        let app2 = app.clone();
         let handle = std::thread::Builder::new()
             .name("khoface-stream".into())
-            .spawn(move || run(app, channel, bus, running, ready, enroll))
+            .spawn(move || run(app2, channel, bus, running, ready, enroll))
             .expect("stream thread");
         *self.worker.lock() = Some(handle);
+        if !self.enroll_mode.load(Ordering::Acquire) {
+            self.recognizer.start(app, self.running.clone());
+        }
     }
 
     pub fn stop_worker(&self) {
@@ -72,6 +80,7 @@ impl Stream {
         if let Some(h) = self.worker.lock().take() {
             let _ = h.join();
         }
+        self.recognizer.join();
     }
 }
 
@@ -96,9 +105,15 @@ fn run(
             None => Vec::new(),
         };
         let detect_ms = ms(t0);
-        let enroll = match (&engine, enroll_mode.load(Ordering::Acquire)) {
+        let enroll_on = enroll_mode.load(Ordering::Acquire);
+        let enroll = match (&engine, enroll_on) {
             (Some(engine), true) => state.enroll.lock().as_mut().map(|s| s.process_frame(engine, &frame.rgb, &faces)),
             _ => None,
+        };
+        let source = if frame.facing == Facing::Front { "live:front" } else { "live:back" };
+        let tracks = match &engine {
+            Some(_) if !enroll_on => state.stream.recognizer.on_frame(&frame.rgb, &faces, source),
+            _ => Vec::new(),
         };
         fps.tick();
 
@@ -118,6 +133,7 @@ fn run(
             height: frame.rgb.height(),
             mirrored: frame.facing == Facing::Front,
             faces: &faces,
+            tracks,
             enroll,
             fps: fps.value(),
             detect_ms,

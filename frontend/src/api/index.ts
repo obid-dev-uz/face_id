@@ -42,6 +42,8 @@ export const api = {
   deletePerson: (id: number) => invoke<void>("delete_person", { id }),
 
   listLogs: (beforeId?: number, limit = 50) => invoke<LogEntry[]>("list_logs", { beforeId, limit }),
+  /** `data:` URL yoki null. */
+  logSnapshot: (id: number) => invoke<string | null>("log_snapshot", { id }),
   purgeLogs: (olderThanDays: number) => invoke<number>("purge_logs", { olderThanDays }),
 
   getSettings: () => invoke<Record<string, string>>("get_settings"),

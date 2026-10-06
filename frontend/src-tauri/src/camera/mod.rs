@@ -21,18 +21,30 @@ pub struct Frame {
     pub at: Instant,
 }
 
-/// Faqat oxirgi kadr saqlanadi: sekin qurilmada navbat to'planmaydi va kechikish o'smaydi.
-#[derive(Clone, Default)]
-pub struct FrameBus(Arc<(Mutex<Option<Frame>>, Condvar)>);
+/// Bitta o'rinli pochta qutisi: faqat oxirgi qiymat saqlanadi. Sekin qurilmada navbat
+/// to'planmaydi va kechikish o'smaydi.
+pub struct Slot<T>(Arc<(Mutex<Option<T>>, Condvar)>);
 
-impl FrameBus {
-    pub fn put(&self, f: Frame) {
-        *self.0 .0.lock() = Some(f);
+impl<T> Clone for Slot<T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<T> Default for Slot<T> {
+    fn default() -> Self {
+        Self(Arc::new((Mutex::new(None), Condvar::new())))
+    }
+}
+
+impl<T> Slot<T> {
+    pub fn put(&self, v: T) {
+        *self.0 .0.lock() = Some(v);
         self.0 .1.notify_one();
     }
 
-    /// Yangi kadrni `timeout` gacha kutadi.
-    pub fn wait_take(&self, timeout: Duration) -> Option<Frame> {
+    /// Yangi qiymatni `timeout` gacha kutadi.
+    pub fn wait_take(&self, timeout: Duration) -> Option<T> {
         let mut slot = self.0 .0.lock();
         if slot.is_none() {
             self.0 .1.wait_for(&mut slot, timeout);
@@ -44,6 +56,9 @@ impl FrameBus {
         *self.0 .0.lock() = None;
     }
 }
+
+/// Kamera kadrlari: platforma manbasi yozadi, oqim ishchisi o'qiydi.
+pub type FrameBus = Slot<Frame>;
 
 #[cfg(target_os = "android")]
 pub mod android {

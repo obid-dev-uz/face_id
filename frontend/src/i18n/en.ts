@@ -1,7 +1,7 @@
 export default {
   nav: { live: "Camera", persons: "People", enroll: "Add", logs: "Log", settings: "Settings" },
   placeholder: "This section arrives in a later phase.",
-  settings: { data: "Data", backup: "Create backup", backupDone: "Saved", language: "Language", about: "About", loading: "Loading…" },
+  settings: { recognition: "Recognition", threshold: "Similarity threshold", thresholdHint: "Higher means fewer false matches but more \"Unknown\".", cooldown: "Repeat log interval per person", seconds: "{n} s", minutes: "{n} min", data: "Data", backup: "Create backup", backupDone: "Saved", language: "Language", about: "About", loading: "Loading…" },
   enroll: {
     title: "New person",
     fullName: "Full name",
@@ -50,6 +50,8 @@ export default {
     delete: "Delete",
     confirmDelete: "Delete {name} and all samples?",
   },
+  live: { unknown: "Unknown", pending: "Recognizing…" },
+  logs: { empty: "The log is empty. Recognized and unknown faces from the camera page appear here.", loadMore: "Load more", unknown: "Unknown person" },
   camera: {
     starting: "Starting camera…",
     deniedTitle: "Camera access needed",

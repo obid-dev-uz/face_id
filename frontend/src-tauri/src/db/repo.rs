@@ -301,6 +301,14 @@ pub fn list_logs(conn: &Connection, before_id: Option<i64>, limit: u32) -> AppRe
     Ok(rows.collect::<Result<_, _>>()?)
 }
 
+/// Jurnal yozuvidagi yuz rasmi (JPEG).
+pub fn get_log_snapshot(conn: &Connection, id: i64) -> AppResult<Option<Vec<u8>>> {
+    Ok(conn
+        .query_row("SELECT snapshot FROM recognition_logs WHERE id = ?1", [id], |r| r.get(0))
+        .optional()?
+        .flatten())
+}
+
 /// Saqlash muddati siyosati: `days` kundan eski yozuvlarni o'chiradi.
 pub fn purge_logs_older_than(conn: &Connection, days: u32) -> AppResult<usize> {
     Ok(conn.execute(
@@ -475,6 +483,11 @@ mod tests {
         c.execute("UPDATE recognition_logs SET created_at = datetime('now', '-40 days') WHERE id <= 2", []).unwrap();
         assert_eq!(purge_logs_older_than(&c, 30).unwrap(), 2);
         assert_eq!(list_logs(&c, None, 10).unwrap().len(), 3);
+
+        let id = insert_log(&c, &NewLog { person_id: None, score: 0.1, matched: false, source: "live".into(), snapshot: Some(vec![1, 2]) }).unwrap();
+        assert_eq!(get_log_snapshot(&c, id).unwrap(), Some(vec![1, 2]));
+        assert_eq!(get_log_snapshot(&c, 3).unwrap(), None);
+        assert_eq!(get_log_snapshot(&c, 999).unwrap(), None);
     }
 
     #[test]

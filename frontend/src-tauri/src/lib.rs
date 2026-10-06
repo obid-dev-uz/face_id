@@ -5,6 +5,7 @@ mod engine;
 mod enroll;
 mod error;
 mod face;
+mod recognize;
 mod state;
 
 use tauri::Manager;
@@ -32,6 +33,7 @@ pub fn run() {
             commands::persons::set_person_active,
             commands::persons::delete_person,
             commands::logs::list_logs,
+            commands::logs::log_snapshot,
             commands::logs::purge_logs,
             commands::settings::get_settings,
             commands::settings::set_setting,
