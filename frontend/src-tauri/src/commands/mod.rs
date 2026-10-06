@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod backup;
 pub mod camera;
 pub mod engine;

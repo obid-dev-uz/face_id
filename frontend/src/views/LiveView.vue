@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useCamera } from "../composables/useCamera";
 import CameraNotice from "../components/CameraNotice.vue";
 import EngineBanner from "../components/EngineBanner.vue";
+import AdminBar from "../components/AdminBar.vue";
 
 const { t } = useI18n();
 
@@ -79,6 +80,8 @@ const focus = computed(() => {
 <template>
   <section class="page live">
     <template v-if="!cameraOk">
+      <!-- Kamera ishlamasa ham admin kira olishi kerak (masalan, sozlamalar uchun) -->
+      <AdminBar class="admin-plain" />
       <EngineBanner />
       <CameraNotice :status="cam.status.value" :error="cam.error.value" @retry="cam.start()" @settings="cam.openSettings()" />
     </template>
@@ -98,6 +101,7 @@ const focus = computed(() => {
 
       <div class="top">
         <div class="banner"><EngineBanner /></div>
+        <AdminBar class="admin" />
         <button
           type="button"
           class="flip"
@@ -127,7 +131,7 @@ const focus = computed(() => {
 </template>
 
 <style scoped>
-/* Pastki navigatsiya (z-index 10) ochiq qoladi: Live — bosh sahifa, boshqa bo'limlarga o'tish kerak */
+/* Admin rejimida pastki navigatsiya (z-index 10) ochiq qoladi; mehmon rejimida --tabbar-h = 0 */
 .fs {
   position: fixed; left: 0; top: 0; right: 0; z-index: 5;
   bottom: 56px; bottom: calc(var(--tabbar-h) + var(--safe-bottom));
@@ -164,6 +168,8 @@ const focus = computed(() => {
 
 .top { position: absolute; left: 0; right: 0; top: 0; padding: 12px; display: -webkit-box; display: flex; }
 .banner { -webkit-box-flex: 1; flex: 1 1 auto; min-width: 0; margin-right: 8px; color: var(--text); }
+.admin-plain { -webkit-box-pack: end; justify-content: flex-end; margin-bottom: 12px; }
+.admin { -webkit-box-flex: 0; flex: 0 0 auto; margin: 4px 8px 0 0; }
 .flip {
   -webkit-box-flex: 0; flex: 0 0 auto; width: 48px; height: 48px; padding: 12px;
   border: 0; border-radius: 50%; background: rgba(0, 0, 0, .4); cursor: pointer;

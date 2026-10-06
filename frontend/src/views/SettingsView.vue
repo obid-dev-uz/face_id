@@ -3,10 +3,12 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "../stores/app";
 import { LOCALES, setLocale, type Locale } from "../i18n";
-import { api } from "../api";
+import { adminApi, api, type AdminEvent } from "../api";
 import { isTauri } from "../platform";
 import EngineDiagnostics from "../components/EngineDiagnostics.vue";
 import { toast } from "../composables/useToast";
+import PinDialog from "../components/PinDialog.vue";
+import { adminState } from "../composables/useAdmin";
 
 const { locale, t } = useI18n();
 const app = useAppStore();
@@ -74,6 +76,48 @@ async function wipeAll() {
   }
 }
 
+/* Rust: admin.rs SESSION_MIN_RANGE, DEFAULT_SESSION_MIN */
+const SESSIONS = [1, 3, 5, 10];
+const sessionMin = ref(Math.round(adminState.timeoutMs / 60000));
+const changingPin = ref(false);
+
+async function setSession(n: number) {
+  try {
+    await api.setSetting("security.session_min", String(n));
+    sessionMin.value = n;
+  } catch (e) {
+    toast(String(e));
+  }
+}
+
+function onPinChanged() {
+  changingPin.value = false;
+  toast(t("admin.pinChanged"));
+}
+
+const events = ref<AdminEvent[] | null>(null);
+async function toggleJournal() {
+  if (events.value) {
+    events.value = null;
+    return;
+  }
+  try {
+    events.value = await adminApi.events(100);
+  } catch (e) {
+    toast(String(e));
+  }
+}
+/** SQLite `datetime('now')` — UTC. */
+function when(s: string) {
+  const d = new Date(s.replace(" ", "T") + "Z");
+  return isNaN(d.getTime()) ? s : d.toLocaleString();
+}
+const eventName = (k: string) => {
+  const key = "admin.event." + k;
+  const s = t(key);
+  return s === key ? k : s;
+};
+
 const fmtDays = (n: number) => (n === 0 ? t("privacy.forever") : t("privacy.days", { n }));
 
 const fmtSecs = (n: number) => (n < 60 ? t("settings.seconds", { n }) : t("settings.minutes", { n: n / 60 }));
@@ -122,6 +166,26 @@ async function makeBackup() {
         {{ fmtSecs(n) }}
       </button>
     </div>
+
+    <h2 class="section-title">{{ $t("admin.section") }}</h2>
+    <button type="button" class="btn" :disabled="!isTauri" @click="changingPin = true">{{ $t("admin.changePin") }}</button>
+    <p class="small">{{ $t("admin.sessionLength") }}</p>
+    <div class="segmented">
+      <button v-for="n in SESSIONS" :key="n" type="button" :class="{ on: sessionMin === n }" :disabled="!isTauri" @click="setSession(n)">
+        {{ $t("settings.minutes", { n }) }}
+      </button>
+    </div>
+    <button type="button" class="btn journal-btn" :disabled="!isTauri" @click="toggleJournal">
+      {{ events ? $t("admin.hideJournal") : $t("admin.showJournal") }}
+    </button>
+    <ul v-if="events" class="journal">
+      <li v-if="!events.length" class="muted">{{ $t("admin.journalEmpty") }}</li>
+      <li v-for="e in events" :key="e.id" :class="{ bad: e.kind === 'fail' || e.kind === 'lockout' }">
+        <span>{{ eventName(e.kind) }}<template v-if="e.detail"> · {{ e.detail }}</template></span>
+        <time class="muted">{{ when(e.createdAt) }}</time>
+      </li>
+    </ul>
+    <PinDialog v-if="changingPin" mode="change" @close="changingPin = false" @done="onPinChanged" />
 
     <h2 class="section-title">{{ $t("privacy.title") }}</h2>
     <p class="small">{{ $t("privacy.retention") }}</p>
@@ -172,4 +236,10 @@ async function makeBackup() {
 .check { display: flex; align-items: flex-start; margin: 16px 0; }
 .check input { width: 22px; height: 22px; margin: 2px 10px 0 0; flex: 0 0 auto; }
 .danger { color: var(--danger); }
+.journal-btn { margin-top: 12px; }
+.journal { list-style: none; margin: 8px 0 0; padding: 4px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+.journal li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.journal li:last-child { border-bottom: 0; }
+.journal li.bad span { color: var(--danger); }
+.journal time { display: block; font-size: 12px; }
 </style>

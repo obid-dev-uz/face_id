@@ -111,6 +111,24 @@ button { font: inherit; color: inherit; }
   .content { flex: 1 1 auto; overflow: auto; padding: 24px 32px; }
 }
 
+/* Mehmon rejimi: pastki menyu yo'q, kamera butun ekranni egallaydi */
+.shell.guest { --tabbar-h: 0px; --safe-bottom: 0px; }
+.shell.guest .content { padding-bottom: 16px; }
+
+/* Admin rejimi: qolgan vaqt va "Chiqish" (kamera sahifasidan tashqari) */
+.admin-float { position: fixed; top: 10px; right: 12px; z-index: 15; }
+@media (min-width: 768px) { .admin-float { top: 16px; right: 24px; } }
+
+/* Sessiya tugashidan 30 s oldin; yuz qo'shish paneli (z 50) ustida ham ko'rinadi */
+.session-warn {
+  position: fixed; left: 12px; right: 12px; top: 10px; z-index: 60;
+  display: -webkit-box; display: flex; -webkit-box-align: center; align-items: center;
+  max-width: 480px; margin: 0 auto; padding: 8px 8px 8px 14px; border-radius: 14px;
+  background: #dc6803; color: #fff; font-size: 14px; box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+}
+.session-warn span { -webkit-box-flex: 1; flex: 1 1 auto; margin-right: 8px; }
+.session-warn button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: #fff; color: #b54708; font-weight: 600; cursor: pointer; }
+
 /* Android Toast kabi: pastki navigatsiya ustida */
 .toast {
   position: fixed; left: 50%; bottom: 72px; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);

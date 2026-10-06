@@ -1,24 +1,37 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { installBackButton } from "./composables/useBack";
 import WebViewNotice from "./components/WebViewNotice.vue";
-import { api } from "./api";
+import AdminBar from "./components/AdminBar.vue";
+import PinDialog from "./components/PinDialog.vue";
+import { adminApi } from "./api";
 import { isTauri } from "./platform";
-import { toastText } from "./composables/useToast";
+import { toast, toastText } from "./composables/useToast";
+import { adminState, initAdmin, onSessionEnd, remainingMs, sessionWarn, touch } from "./composables/useAdmin";
 
 const router = useRouter();
+const route = useRoute();
 const { t } = useI18n();
 onMounted(() => {
   installBackButton(router, () => t("app.pressAgainToExit"));
-  // FLAG_SECURE oynaga qo'yiladi: har safar ilova ochilganda qayta qo'llanadi.
-  if (isTauri) {
-    api.getSettings()
-      .then((s) => (s["privacy.secure_screen"] === "1" ? api.setSecureScreen(true) : undefined))
-      .catch(() => {});
-  }
+  // FLAG_SECURE oynaga qo'yiladi: har safar ilova ochilganda qayta qo'llanadi (admin rejimida doim).
+  if (isTauri) adminApi.syncSecureScreen().catch(() => {});
+  initAdmin();
 });
+
+// Sessiya yopilganda: hamma narsa yopiladi, faqat tanish ekrani qoladi.
+onSessionEnd((reason) => {
+  adminState.pinOpen = false;
+  router.replace("/live");
+  if (reason !== "reset") toast(t(reason === "logout" ? "admin.loggedOut" : "admin.expired"), 2500);
+});
+
+function onPinDone() {
+  adminState.pinOpen = false;
+  toast(t("admin.welcome"));
+}
 
 const tabs = [
   { to: "/live", key: "live", icon: "M4 7h3l2-3h6l2 3h3v13H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },
@@ -30,18 +43,31 @@ const tabs = [
 </script>
 
 <template>
-  <div class="shell">
+  <!-- Mehmon rejimida pastki menyu yo'q: faqat tanish ekrani -->
+  <div class="shell" :class="{ guest: !adminState.active }">
     <main class="content">
+      <!-- Kamera sahifasida tugma kamera paneli ichida (flip yonida) -->
+      <AdminBar v-if="adminState.active && route.name !== 'live'" class="admin-float" />
       <!-- fullPath: /enroll va /enroll?person=… bir xil komponent, lekin holati alohida bo'lishi kerak -->
       <WebViewNotice />
       <router-view :key="$route.fullPath" />
     </main>
-    <nav class="tabbar">
+    <nav v-if="adminState.active" class="tabbar">
       <router-link v-for="t in tabs" :key="t.key" :to="t.to" class="tab">
         <svg viewBox="0 0 24 24" class="tab-icon" aria-hidden="true"><path :d="t.icon" /></svg>
         <span class="tab-label">{{ $t("nav." + t.key) }}</span>
       </router-link>
     </nav>
+    <div v-if="sessionWarn" class="session-warn" role="alert">
+      <span>{{ $t("admin.warn", { s: Math.ceil(remainingMs / 1000) }) }}</span>
+      <button type="button" @click="touch(true)">{{ $t("admin.stay") }}</button>
+    </div>
+    <PinDialog
+      v-if="adminState.pinOpen"
+      :mode="adminState.configured ? 'unlock' : 'setup'"
+      @close="adminState.pinOpen = false"
+      @done="onPinDone"
+    />
     <div v-if="toastText" class="toast" role="status">{{ toastText }}</div>
   </div>
 </template>

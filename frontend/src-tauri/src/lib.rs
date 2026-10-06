@@ -1,3 +1,4 @@
+mod admin;
 mod camera;
 mod commands;
 mod db;
@@ -27,10 +28,20 @@ pub fn run() {
             }
             app.manage(state::AppState::new(conn, dir));
             engine::spawn_loader(app.handle().clone());
+            admin::spawn_watcher(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::system::app_info,
+            commands::admin::admin_status,
+            commands::admin::admin_setup,
+            commands::admin::admin_unlock,
+            commands::admin::admin_lock,
+            commands::admin::admin_touch,
+            commands::admin::admin_change_pin,
+            commands::admin::admin_reset,
+            commands::admin::list_admin_events,
+            commands::system::sync_secure_screen,
             commands::persons::list_persons,
             commands::persons::get_person,
             commands::persons::create_person,

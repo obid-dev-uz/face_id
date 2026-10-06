@@ -163,3 +163,52 @@ export const enrollApi = {
   removeSample: (index: number) => invoke<void>("enroll_remove_sample", { index }),
   commit: (input: PersonInput, allowDuplicate = false) => invoke<Person>("enroll_commit", { input, allowDuplicate }),
 };
+
+export interface AdminStatus {
+  /** PIN o'rnatilganmi (aks holda "Kirish" PIN o'rnatishni so'raydi). */
+  configured: boolean;
+  active: boolean;
+  remainingMs: number;
+  timeoutMs: number;
+  /** PIN kiritish bloklangan bo'lsa — qolgan vaqt. */
+  lockedMs: number;
+}
+
+export type PinVerdict =
+  | { result: "ok" }
+  | { result: "wrong"; attemptsLeft: number; lockedMs: number }
+  | { result: "locked"; lockedMs: number }
+  | { result: "notConfigured" };
+
+export interface AdminEvent {
+  id: number;
+  kind: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+/** Rust `admin::SESSION_EVENT` yuboradigan ma'lumot. */
+export interface AdminSessionEvent {
+  active: boolean;
+  remainingMs: number;
+  timeoutMs: number;
+  reason: "logout" | "expire" | "reset" | null;
+}
+
+export const adminApi = {
+  status: () => invoke<AdminStatus>("admin_status"),
+  setup: (pin: string) => invoke<void>("admin_setup", { pin }),
+  unlock: (pin: string) => invoke<PinVerdict>("admin_unlock", { pin }),
+  lock: () => invoke<void>("admin_lock"),
+  touch: () => invoke<AdminStatus>("admin_touch"),
+  changePin: (oldPin: string, newPin: string) => invoke<PinVerdict>("admin_change_pin", { oldPin, newPin }),
+  /** PIN unutilganda: barcha biometrik ma'lumot va PIN o'chiriladi. */
+  reset: () => invoke<void>("admin_reset"),
+  events: (limit = 100) => invoke<AdminEvent[]>("list_admin_events", { limit }),
+  syncSecureScreen: () => invoke<void>("sync_secure_screen"),
+};
+
+/** Rust `AppError::Forbidden`: admin sessiyasi yo'q yoki muddati o'tgan. */
+export function isAdminRequired(e: unknown): boolean {
+  return String(e).indexOf("admin_required") >= 0;
+}

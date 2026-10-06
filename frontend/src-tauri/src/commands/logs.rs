@@ -1,5 +1,6 @@
 use tauri::AppHandle;
 
+use crate::admin;
 use crate::db::repo::{self, LogEntry};
 use crate::error::AppResult;
 use crate::state::with_db;
@@ -20,6 +21,7 @@ pub fn apply_retention(conn: &rusqlite::Connection) -> AppResult<usize> {
 
 #[tauri::command]
 pub async fn list_logs(app: AppHandle, before_id: Option<i64>, limit: Option<u32>) -> AppResult<Vec<LogEntry>> {
+    admin::check(&app)?;
     with_db(&app, move |c| repo::list_logs(c, before_id, limit.unwrap_or(50))).await
 }
 
@@ -27,6 +29,7 @@ pub async fn list_logs(app: AppHandle, before_id: Option<i64>, limit: Option<u32
 #[tauri::command]
 pub async fn log_snapshot(app: AppHandle, id: i64) -> AppResult<Option<String>> {
     use base64::Engine as _;
+    admin::check(&app)?;
     let jpeg = with_db(&app, move |c| repo::get_log_snapshot(c, id)).await?;
     Ok(jpeg.map(|b| format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(b))))
 }
@@ -34,15 +37,28 @@ pub async fn log_snapshot(app: AppHandle, id: i64) -> AppResult<Option<String>> 
 /// Bittalab yoki tanlab o'chirish.
 #[tauri::command]
 pub async fn delete_logs(app: AppHandle, ids: Vec<i64>) -> AppResult<usize> {
-    with_db(&app, move |c| repo::delete_logs(c, &ids)).await
+    admin::act(&app)?;
+    with_db(&app, move |c| {
+        let n = repo::delete_logs(c, &ids)?;
+        admin::log_event(c, "logs_delete", Some(&n.to_string()))?;
+        Ok(n)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn clear_logs(app: AppHandle) -> AppResult<usize> {
-    with_db(&app, |c| repo::clear_logs(c)).await
+    admin::act(&app)?;
+    with_db(&app, |c| {
+        let n = repo::clear_logs(c)?;
+        admin::log_event(c, "logs_clear", Some(&n.to_string()))?;
+        Ok(n)
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn purge_logs(app: AppHandle, older_than_days: u32) -> AppResult<usize> {
+    admin::act(&app)?;
     with_db(&app, move |c| repo::purge_logs_older_than(c, older_than_days)).await
 }

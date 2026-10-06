@@ -119,6 +119,10 @@ fn run(
 
         // Namuna olingan kadr albatta ko'rsatiladi (frontend shu xabardan biladi).
         let captured = enroll.as_ref().is_some_and(|e| e.captured);
+        if captured {
+            // Namuna olindi — admin amali sifatida sessiya uzayadi.
+            crate::admin::extend_if_active(&app);
+        }
         if !ready.swap(false, Ordering::AcqRel) && !captured {
             continue; // frontend band — bu kadrni ko'rsatmaymiz, lekin aniqlash davom etadi
         }

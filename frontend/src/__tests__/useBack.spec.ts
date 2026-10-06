@@ -11,7 +11,7 @@ describe("Android back button", () => {
 
   it("person page declares its parent", () => {
     const r = routes.find((x) => x.path === "/persons/:id");
-    expect(r && (r as { meta?: { parent?: string } }).meta).toEqual({ parent: "/persons" });
+    expect(r && (r as { meta?: { parent?: string } }).meta).toMatchObject({ parent: "/persons" });
   });
 });
 

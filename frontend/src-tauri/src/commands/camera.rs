@@ -47,9 +47,14 @@ pub async fn start_stream(
     enroll: Option<bool>,
     on_frame: Channel<InvokeResponseBody>,
 ) -> AppResult<Option<CameraInfo>> {
+    // Jonli tanish hamma uchun ochiq; yuz qo'shish rejimi — faqat admin.
+    let enroll = enroll.unwrap_or(false);
+    if enroll {
+        crate::admin::check(&app)?;
+    }
     blocking(move || {
         let state = tauri::Manager::state::<AppState>(&app);
-        state.stream.start(app.clone(), on_frame, enroll.unwrap_or(false));
+        state.stream.start(app.clone(), on_frame, enroll);
         #[cfg(target_os = "android")]
         crate::camera::android::attach(state.stream.bus.clone());
         #[cfg(all(desktop, feature = "desktop-camera"))]

@@ -23,10 +23,16 @@ pub struct AppState {
     pub stream: crate::camera::stream::Stream,
     /// Ro'yxatga olish ustasi ochiq bo'lsa — joriy sessiya.
     pub enroll: Mutex<Option<crate::enroll::Session>>,
+    pub admin: crate::admin::Admin,
 }
 
 impl AppState {
     pub fn new(db: Connection, data_dir: PathBuf) -> Self {
+        let session_min = crate::db::repo::get_setting(&db, crate::admin::SESSION_KEY)
+            .ok()
+            .flatten()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(crate::admin::DEFAULT_SESSION_MIN);
         Self {
             db: Mutex::new(db),
             data_dir,
@@ -34,6 +40,7 @@ impl AppState {
             matcher: RwLock::new(Matcher::new(FaceEngine::DIM)),
             stream: Default::default(),
             enroll: Mutex::new(None),
+            admin: crate::admin::Admin::new(session_min),
         }
     }
 

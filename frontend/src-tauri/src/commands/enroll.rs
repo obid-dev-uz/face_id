@@ -1,6 +1,7 @@
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
 
+use crate::admin;
 use crate::db::repo::{self, Person, PersonInput};
 use crate::enroll::{self, Duplicate, Pose, Session};
 use crate::error::{AppError, AppResult};
@@ -40,10 +41,12 @@ fn with_session<T>(state: &AppState, f: impl FnOnce(&mut Session) -> AppResult<T
 /// Yangi sessiya (avvalgisi bo'lsa, tashlab yuboriladi). `person_id` — mavjud shaxsga
 /// namuna qo'shish.
 #[tauri::command]
-pub fn enroll_start(state: State<'_, AppState>, person_id: Option<i64>) {
+pub fn enroll_start(app: AppHandle, state: State<'_, AppState>, person_id: Option<i64>) -> AppResult<()> {
+    admin::act(&app)?;
     let mut s = Session::default();
     s.person_id = person_id;
     *state.enroll.lock() = Some(s);
+    Ok(())
 }
 
 #[tauri::command]
@@ -53,6 +56,7 @@ pub fn enroll_cancel(state: State<'_, AppState>) {
 
 #[tauri::command]
 pub async fn enroll_state(app: AppHandle) -> AppResult<EnrollState> {
+    admin::check(&app)?;
     blocking(move || {
         let state = app.state::<AppState>();
         let threshold = threshold(&state)?;
@@ -77,7 +81,8 @@ pub async fn enroll_state(app: AppHandle) -> AppResult<EnrollState> {
 
 /// Ekrandagi tiniq doiraning kadrdagi joyi (ekran o'lchami o'zgarganda qayta yuboriladi).
 #[tauri::command]
-pub fn enroll_set_region(state: State<'_, AppState>, region: enroll::Region) -> AppResult<()> {
+pub fn enroll_set_region(app: AppHandle, state: State<'_, AppState>, region: enroll::Region) -> AppResult<()> {
+    admin::check(&app)?;
     with_session(&state, |s| {
         s.region = Some(region);
         Ok(())
@@ -85,7 +90,8 @@ pub fn enroll_set_region(state: State<'_, AppState>, region: enroll::Region) -> 
 }
 
 #[tauri::command]
-pub fn enroll_remove_sample(state: State<'_, AppState>, index: usize) -> AppResult<()> {
+pub fn enroll_remove_sample(app: AppHandle, state: State<'_, AppState>, index: usize) -> AppResult<()> {
+    admin::act(&app)?;
     with_session(&state, |s| {
         s.remove(index);
         Ok(())
@@ -95,6 +101,7 @@ pub fn enroll_remove_sample(state: State<'_, AppState>, index: usize) -> AppResu
 /// Saqlash. Bazada o'xshash shaxs bo'lsa, `allow_duplicate` bo'lmaguncha rad etiladi.
 #[tauri::command]
 pub async fn enroll_commit(app: AppHandle, input: PersonInput, allow_duplicate: Option<bool>) -> AppResult<Person> {
+    admin::act(&app)?;
     blocking(move || {
         let state = app.state::<AppState>();
         let threshold = threshold(&state)?;
@@ -104,7 +111,10 @@ pub async fn enroll_commit(app: AppHandle, input: PersonInput, allow_duplicate: 
         if !allow_duplicate.unwrap_or(false) && session.duplicate(&matcher, threshold).is_some() {
             return Err(AppError::Invalid("bu shaxs bazada bor".into()));
         }
-        let person = session.commit(&mut state.db.lock(), &mut matcher, &input)?;
+        let mut conn = state.db.lock();
+        let person = session.commit(&mut conn, &mut matcher, &input)?;
+        let kind = if session.person_id.is_some() { "samples_add" } else { "person_create" };
+        admin::log_event(&conn, kind, Some(&person.full_name))?;
         *guard = None;
         Ok(person)
     })

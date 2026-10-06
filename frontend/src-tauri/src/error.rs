@@ -20,6 +20,9 @@ pub enum AppError {
     NotFound(&'static str),
     #[error("noto'g'ri qiymat: {0}")]
     Invalid(String),
+    /// Frontend shu matndagi `admin_required` bo'yicha taniydi.
+    #[error("admin huquqi kerak (admin_required)")]
+    Forbidden,
 }
 
 impl From<anyhow::Error> for AppError {

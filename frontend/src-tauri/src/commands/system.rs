@@ -32,11 +32,19 @@ pub fn app_info(state: State<'_, AppState>) -> AppResult<AppInfo> {
 }
 
 /// Skrinshot taqiqi (Android FLAG_SECURE). Sozlama saqlanadi; ilova ochilganda frontend
-/// uni qayta qo'llaydi (oyna har safar yangidan yaratiladi).
+/// `sync_secure_screen` bilan uni qayta qo'llaydi (oyna har safar yangidan yaratiladi).
+/// Admin rejimida esa sozlamadan qat'i nazar yoqiq.
 #[tauri::command]
 pub async fn set_secure_screen(app: tauri::AppHandle, enabled: bool) -> AppResult<()> {
-    use tauri_plugin_khoface_camera::CameraExt;
+    crate::admin::act(&app)?;
     let value = if enabled { "1" } else { "0" };
     crate::state::with_db(&app, move |c| db::repo::set_setting(c, "privacy.secure_screen", value)).await?;
-    crate::state::blocking(move || Ok(app.camera().set_secure(enabled)?)).await
+    crate::admin::apply_secure(&app);
+    Ok(())
+}
+
+/// Ilova ochilganda: sozlama va admin rejimiga ko'ra FLAG_SECURE qayta qo'llanadi.
+#[tauri::command]
+pub fn sync_secure_screen(app: tauri::AppHandle) {
+    crate::admin::apply_secure(&app);
 }
