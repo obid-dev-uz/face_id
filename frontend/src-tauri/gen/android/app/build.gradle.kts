@@ -14,8 +14,28 @@ val tauriProperties = Properties().apply {
     }
 }
 
+// KHOFace: release imzosi. keystore.properties git'da emas (scripts/android-keystore.sh yaratadi):
+//   storeFile=/mutlaq/yo'l/khoface-release.jks, storePassword=…, keyAlias=khoface, keyPassword=…
+// Fayl bo'lmasa, release APK imzosiz chiqadi (o'rnatib bo'lmaydi) — scripts/android-release.sh buni tekshiradi.
+val keystoreProperties = Properties().apply {
+    val propFile = rootProject.file("keystore.properties")
+    if (propFile.exists()) {
+        propFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     compileSdk = 37
+    signingConfigs {
+        if (keystoreProperties.containsKey("storeFile")) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
     namespace = "kho.face"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
@@ -39,6 +59,12 @@ android {
             }
         }
         getByName("release") {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
+            // Faqat telefonda sinash uchun (KHOFACE_DEBUG_SIGN=1): release build debug kalit bilan.
+            // Bunday APK'ni tarqatmang — yangilanishlar haqiqiy kalit bilan o'rnatilmaydi.
+            if (System.getenv("KHOFACE_DEBUG_SIGN") == "1") {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             optimization {
                enable = true
             }

@@ -8,3 +8,6 @@ frontend/src-tauri/gen/android/app/src/main/jniLibs/
 # Modellar scripts/fetch-models.sh bilan yuklanadi
 frontend/src-tauri/resources/models/*.onnx
 frontend/src-tauri/gen/android/app/src/main/assets/
+
+# scripts/android-release.sh natijalari
+/dist/
