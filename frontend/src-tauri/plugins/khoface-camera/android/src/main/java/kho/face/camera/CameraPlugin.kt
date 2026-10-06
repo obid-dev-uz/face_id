@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.util.Size
+import android.view.WindowManager
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
@@ -26,6 +27,11 @@ import app.tauri.plugin.Plugin
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
+@InvokeArg
+class SecureArgs {
+    var enabled: Boolean = false
+}
 
 @InvokeArg
 class StartArgs {
@@ -126,6 +132,20 @@ class CameraPlugin(private val activity: Activity) : Plugin(activity) {
     fun stop(invoke: Invoke) {
         activity.runOnUiThread {
             provider?.unbindAll()
+            invoke.resolve()
+        }
+    }
+
+    /** FLAG_SECURE: skrinshot, ekran yozuvi va "so'nggi ilovalar" eskizida ilova ko'rinmaydi. */
+    @Command
+    fun setSecure(invoke: Invoke) {
+        val args = invoke.parseArgs(SecureArgs::class.java)
+        activity.runOnUiThread {
+            if (args.enabled) {
+                activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            } else {
+                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            }
             invoke.resolve()
         }
     }

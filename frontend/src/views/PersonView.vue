@@ -75,6 +75,12 @@ async function removePerson() {
   });
 }
 
+/** consent_at — ISO (frontend'dan), created_at — SQLite UTC "YYYY-MM-DD HH:MM:SS". */
+function when(s: string) {
+  const d = new Date(s.indexOf("T") > 0 ? s : s.replace(" ", "T") + "Z");
+  return isNaN(d.getTime()) ? s : d.toLocaleString();
+}
+
 onMounted(load);
 </script>
 
@@ -85,6 +91,9 @@ onMounted(load);
     <template v-if="person">
       <h1 class="page-title">{{ person.fullName }}</h1>
       <p v-if="!person.isActive" class="warn">{{ $t("person.inactiveHint") }}</p>
+      <p class="muted small-note">
+        {{ person.consentAt ? $t("person.consentAt", { date: when(person.consentAt) }) : $t("person.noConsent") }}
+      </p>
 
       <form @submit.prevent="save">
         <label class="field">
@@ -123,6 +132,7 @@ onMounted(load);
 </template>
 
 <style scoped>
+.small-note { font-size: 13px; margin: 0 0 12px; }
 .back { display: inline-block; min-height: 44px; line-height: 44px; text-decoration: none; }
 .field { display: block; margin-bottom: 12px; }
 .field span { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }

@@ -47,6 +47,9 @@ export const api = {
   updatePerson: (id: number, input: PersonInput) => invoke<Person>("update_person", { id, input }),
   setPersonActive: (id: number, active: boolean) => invoke<void>("set_person_active", { id, active }),
   deletePerson: (id: number) => invoke<void>("delete_person", { id }),
+  /** Barcha shaxslar, namunalar va jurnal (sozlamalar qoladi). */
+  wipeAllData: () => invoke<void>("wipe_all_data"),
+  setSecureScreen: (enabled: boolean) => invoke<void>("set_secure_screen", { enabled }),
   listPersonSamples: (personId: number) => invoke<PersonSample[]>("list_person_samples", { personId }),
   deletePersonSample: (id: number) => invoke<void>("delete_person_sample", { id }),
 

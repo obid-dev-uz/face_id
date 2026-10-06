@@ -3,11 +3,21 @@ import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { installBackButton } from "./composables/useBack";
+import { api } from "./api";
+import { isTauri } from "./platform";
 import { toastText } from "./composables/useToast";
 
 const router = useRouter();
 const { t } = useI18n();
-onMounted(() => installBackButton(router, () => t("app.pressAgainToExit")));
+onMounted(() => {
+  installBackButton(router, () => t("app.pressAgainToExit"));
+  // FLAG_SECURE oynaga qo'yiladi: har safar ilova ochilganda qayta qo'llanadi.
+  if (isTauri) {
+    api.getSettings()
+      .then((s) => (s["privacy.secure_screen"] === "1" ? api.setSecureScreen(true) : undefined))
+      .catch(() => {});
+  }
+});
 
 const tabs = [
   { to: "/live", key: "live", icon: "M4 7h3l2-3h6l2 3h3v13H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },

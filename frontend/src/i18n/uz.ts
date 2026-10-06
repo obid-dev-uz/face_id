@@ -48,6 +48,8 @@ export default {
   app: { pressAgainToExit: "Chiqish uchun yana bir marta bosing" },
   errors: { engineFailed: "Yuzni tanish modeli yuklanmadi. Tanish va yangi shaxs qo'shish ishlamaydi." },
   person: {
+    consentAt: "Rozilik olingan: {date}",
+    noConsent: "Rozilik qayd etilmagan",
     save: "Saqlash",
     saved: "Saqlandi",
     active: "Faol (kamerada taniladi)",
@@ -59,6 +61,19 @@ export default {
     samplesAdded: "{n} ta namuna qo'shildi",
     confirmDeleteSample: "Bu namuna o'chirilsinmi?",
     confirmDeleteLast: "Bu oxirgi namuna. O'chirilsa, shaxs kamerada tanilmaydi. Davom etilsinmi?",
+  },
+  privacy: {
+    title: "Maxfiylik",
+    retention: "Jurnal (yuz rasmlari bilan) qancha saqlansin",
+    days: "{n} kun",
+    forever: "Cheksiz",
+    secureScreen: "Skrinshot va ekran yozuvini taqiqlash",
+    secureScreenHint: "Ilova ekrani skrinshotda, ekran yozuvida va so'nggi ilovalar ro'yxatida ko'rinmaydi.",
+    wipe: "Barcha ma'lumotlarni o'chirish",
+    wipeHint: "Barcha shaxslar, ularning namunalari va jurnal o'chiriladi. Sozlamalar qoladi.",
+    wipeConfirm1: "Barcha shaxslar, namunalar va jurnal o'chirilsinmi?",
+    wipeConfirm2: "Bu amalni qaytarib bo'lmaydi. Rostdan ham o'chirilsinmi?",
+    wiped: "Barcha ma'lumotlar o'chirildi",
   },
   persons: {
     empty: "Hali hech kim qo'shilmagan.",

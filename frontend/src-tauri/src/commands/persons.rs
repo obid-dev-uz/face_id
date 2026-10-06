@@ -47,6 +47,14 @@ pub async fn delete_person(app: AppHandle, id: i64) -> AppResult<()> {
     reload_matcher(&app).await
 }
 
+/// Barcha biometrik ma'lumotni o'chirish (shaxslar, namunalar, jurnal). Sozlamalar qoladi.
+#[tauri::command]
+pub async fn wipe_all_data(app: AppHandle) -> AppResult<()> {
+    *app.state::<AppState>().enroll.lock() = None;
+    with_db(&app, repo::wipe_all).await?;
+    reload_matcher(&app).await
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SampleItem {

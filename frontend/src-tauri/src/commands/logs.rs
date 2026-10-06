@@ -4,6 +4,20 @@ use crate::db::repo::{self, LogEntry};
 use crate::error::AppResult;
 use crate::state::with_db;
 
+/// Standart saqlash muddati (kun). 0 — cheksiz.
+pub const DEFAULT_RETENTION_DAYS: u32 = 30;
+
+/// Ishga tushishda: muddati o'tgan jurnal yozuvlari (yuz rasmlari bilan) o'chiriladi.
+pub fn apply_retention(conn: &rusqlite::Connection) -> AppResult<usize> {
+    let days = repo::get_setting(conn, "log.retention_days")?
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(DEFAULT_RETENTION_DAYS);
+    if days == 0 {
+        return Ok(0);
+    }
+    repo::purge_logs_older_than(conn, days)
+}
+
 #[tauri::command]
 pub async fn list_logs(app: AppHandle, before_id: Option<i64>, limit: Option<u32>) -> AppResult<Vec<LogEntry>> {
     with_db(&app, move |c| repo::list_logs(c, before_id, limit.unwrap_or(50))).await

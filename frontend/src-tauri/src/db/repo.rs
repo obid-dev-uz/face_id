@@ -126,11 +126,26 @@ pub fn set_person_active(conn: &Connection, id: i64, active: bool) -> AppResult<
     Ok(())
 }
 
-/// O'chirish huquqi: embeddinglar CASCADE bilan o'chadi, jurnaldagi havola NULL bo'ladi.
-pub fn delete_person(conn: &Connection, id: i64) -> AppResult<()> {
-    if conn.execute("DELETE FROM persons WHERE id = ?1", [id])? == 0 {
+/// O'chirish huquqi: shaxs, uning namunalari (CASCADE) va jurnaldagi yozuvlari ham —
+/// jurnalda yuz rasmi bor, u ham biometrik ma'lumot.
+pub fn delete_person(conn: &mut Connection, id: i64) -> AppResult<()> {
+    let tx = conn.transaction()?;
+    tx.execute("DELETE FROM recognition_logs WHERE person_id = ?1", [id])?;
+    if tx.execute("DELETE FROM persons WHERE id = ?1", [id])? == 0 {
         return Err(AppError::NotFound("shaxs"));
     }
+    tx.commit()?;
+    Ok(())
+}
+
+/// Barcha shaxslar, namunalar va jurnal. Sozlamalar qoladi. `secure_delete` yoqilgan,
+/// WAL esa qisqartiriladi — eski sahifalar faylda qolmaydi.
+pub fn wipe_all(conn: &mut Connection) -> AppResult<()> {
+    let tx = conn.transaction()?;
+    tx.execute("DELETE FROM recognition_logs", [])?;
+    tx.execute("DELETE FROM persons", [])?;
+    tx.commit()?;
+    conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
     Ok(())
 }
 
@@ -433,18 +448,34 @@ mod tests {
     }
 
     #[test]
-    fn delete_cascades_embeddings_and_nulls_logs() {
+    fn delete_removes_embeddings_and_own_logs() {
         let mut c = open_in_memory().unwrap();
         let p = create_person(&mut c, &input("Ali"), &[sample(&[1.0])]).unwrap();
-        insert_log(&c, &NewLog { person_id: Some(p.id), score: 0.8, matched: true, source: "live".into(), snapshot: None }).unwrap();
-        delete_person(&c, p.id).unwrap();
+        insert_log(&c, &NewLog { person_id: Some(p.id), score: 0.8, matched: true, source: "live".into(), snapshot: Some(vec![1]) }).unwrap();
+        insert_log(&c, &NewLog { person_id: None, score: 0.2, matched: false, source: "live".into(), snapshot: None }).unwrap();
+        delete_person(&mut c, p.id).unwrap();
         assert!(load_embeddings(&c, "sface").unwrap().is_empty());
         let n: i64 = c.query_row("SELECT COUNT(*) FROM face_embeddings", [], |r| r.get(0)).unwrap();
         assert_eq!(n, 0);
+        // Faqat shu shaxsning yozuvi (yuz rasmi bilan) o'chdi, noma'lum yozuv qoldi
         let logs = list_logs(&c, None, 10).unwrap();
         assert_eq!(logs.len(), 1);
-        assert_eq!(logs[0].person_id, None);
-        assert!(matches!(delete_person(&c, p.id), Err(AppError::NotFound(_))));
+        assert!(!logs[0].matched);
+        assert!(matches!(delete_person(&mut c, p.id), Err(AppError::NotFound(_))));
+    }
+
+    #[test]
+    fn wipe_all_keeps_settings() {
+        let mut c = open_in_memory().unwrap();
+        create_person(&mut c, &input("Ali"), &[sample(&[1.0])]).unwrap();
+        insert_log(&c, &NewLog { person_id: None, score: 0.2, matched: false, source: "live".into(), snapshot: None }).unwrap();
+        set_setting(&c, "match.threshold", "0.4").unwrap();
+        wipe_all(&mut c).unwrap();
+        assert!(list_persons(&c, None, true).unwrap().is_empty());
+        assert!(list_logs(&c, None, 10).unwrap().is_empty());
+        let n: i64 = c.query_row("SELECT COUNT(*) FROM face_embeddings", [], |r| r.get(0)).unwrap();
+        assert_eq!(n, 0);
+        assert_eq!(get_setting(&c, "match.threshold").unwrap().as_deref(), Some("0.4"));
     }
 
     #[test]

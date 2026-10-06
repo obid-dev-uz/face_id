@@ -133,6 +133,15 @@ impl<R: Runtime> Camera<R> {
     pub fn open_settings(&self) -> Result<()> {
         Ok(self.handle.run_mobile_plugin("openSettings", ())?)
     }
+
+    /// FLAG_SECURE: ilova oynasi skrinshot, ekran yozuvi va "so'nggi ilovalar" ko'rinishida yashiriladi.
+    pub fn set_secure(&self, enabled: bool) -> Result<()> {
+        #[derive(Serialize)]
+        struct Args {
+            enabled: bool,
+        }
+        Ok(self.handle.run_mobile_plugin("setSecure", Args { enabled })?)
+    }
 }
 
 #[cfg(not(target_os = "android"))]
@@ -154,6 +163,9 @@ impl<R: Runtime> Camera<R> {
     }
     pub fn open_settings(&self) -> Result<()> {
         Err(Error::Unsupported)
+    }
+    pub fn set_secure(&self, _enabled: bool) -> Result<()> {
+        Ok(())
     }
 }
 

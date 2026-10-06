@@ -11,9 +11,12 @@ export default defineConfig(() => ({
     vue(),
     // Android 7.x dagi yangilanmagan System WebView (Chrome 52–53) uchun ES5 + polyfill
     // bundle. Faqat `vite build` da ishlaydi; `tauri dev` zamonaviy WebView talab qiladi.
+    // Faqat legacy bundle: zamonaviysini tanlash `import 'data:…'` tekshiruviga tayanadi,
+    // CSP (script-src 'self') uni bloklaydi va baribir legacy yuklanardi. Bundan tashqari
+    // zamonaviy bundle Chrome 105+ talab qiladi — maqsadli telefonlarda (Chrome ≤101) ishlamaydi.
     legacy({
       targets: ["chrome >= 52", "safari >= 13", "edge >= 79"],
-      modernPolyfills: true,
+      renderModernChunks: false,
     }),
   ],
 

@@ -48,6 +48,8 @@ export default {
   app: { pressAgainToExit: "Press back again to exit" },
   errors: { engineFailed: "The face recognition model failed to load. Recognition and enrollment will not work." },
   person: {
+    consentAt: "Consent given: {date}",
+    noConsent: "No consent recorded",
     save: "Save",
     saved: "Saved",
     active: "Active (recognized by the camera)",
@@ -59,6 +61,19 @@ export default {
     samplesAdded: "{n} samples added",
     confirmDeleteSample: "Delete this sample?",
     confirmDeleteLast: "This is the last sample. Without it the person will not be recognized. Continue?",
+  },
+  privacy: {
+    title: "Privacy",
+    retention: "Keep the log (with face photos) for",
+    days: "{n} days",
+    forever: "Forever",
+    secureScreen: "Block screenshots and screen recording",
+    secureScreenHint: "The app screen is hidden from screenshots, screen recordings and the recent apps list.",
+    wipe: "Delete all data",
+    wipeHint: "All people, their samples and the log will be deleted. Settings are kept.",
+    wipeConfirm1: "Delete all people, samples and the log?",
+    wipeConfirm2: "This cannot be undone. Delete everything?",
+    wiped: "All data deleted",
   },
   persons: {
     empty: "No one has been added yet.",

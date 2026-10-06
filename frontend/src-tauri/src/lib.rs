@@ -20,6 +20,11 @@ pub fn run() {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
             let conn = db::open(&dir.join("khoface.db"))?;
+            match commands::logs::apply_retention(&conn) {
+                Ok(n) if n > 0 => log::info!("jurnal: {n} ta eski yozuv o'chirildi"),
+                Ok(_) => {}
+                Err(e) => log::warn!("jurnalni tozalab bo'lmadi: {e}"),
+            }
             app.manage(state::AppState::new(conn, dir));
             engine::spawn_loader(app.handle().clone());
             Ok(())
@@ -32,6 +37,8 @@ pub fn run() {
             commands::persons::update_person,
             commands::persons::set_person_active,
             commands::persons::delete_person,
+            commands::persons::wipe_all_data,
+            commands::system::set_secure_screen,
             commands::persons::list_person_samples,
             commands::persons::delete_person_sample,
             commands::logs::list_logs,
