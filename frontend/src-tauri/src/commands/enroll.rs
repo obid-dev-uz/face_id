@@ -12,6 +12,7 @@ use crate::state::{blocking, AppState};
 pub struct SampleView {
     thumb: String,
     pose: Option<Pose>,
+    ring: u8,
     score: f32,
 }
 
@@ -57,7 +58,7 @@ pub async fn enroll_state(app: AppHandle) -> AppResult<EnrollState> {
             let samples = s
                 .samples
                 .iter()
-                .map(|x| SampleView { thumb: enroll::thumb_data_url(&x.thumb_png), pose: x.pose, score: x.score })
+                .map(|x| SampleView { thumb: enroll::thumb_data_url(&x.thumb_png), pose: x.pose, ring: x.ring, score: x.score })
                 .collect();
             Ok((samples, s.target(), s.duplicate(&state.matcher.read(), threshold)))
         })?;

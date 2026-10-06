@@ -26,34 +26,46 @@ const count = computed(() => (feedback.value ? feedback.value.count : 0));
 
 const signed = (v: number) => (v > 0 ? "+" : "") + Math.round(v);
 
-/* Halqa: Rust `DIRECTIONS` tartibida, 45° qadam, 0° — yaw musbat (foydalanuvchining chapi).
+/* Ikki halqa: Rust `DIRECTIONS` tartibida, 45° qadam, 0° — yaw musbat (foydalanuvchining
+ * chapi). Ichki — boshni ozroq, tashqi — ko'proq burish (Rust `MIN_*` va `OUTER_*` ellipslari).
  * Koordinatalar viewer foizida; oval markazi (50, 45), yarim o'qlari 25 × 28 (.oval bilan mos). */
 const DIRECTIONS: Pose[] = ["left", "upLeft", "up", "upRight", "right", "downRight", "down", "downLeft"];
-const CX = 50, CY = 45, RX = 30, RY = 32;
+const CX = 50, CY = 45, RX = 35, RY = 37;
+/** Ichki halqa radiusi tashqisiga nisbatan. */
+const INNER_K = 29 / 35;
 /** Oldingi kamerada kadr ko'zgu kabi ko'rsatiladi: foydalanuvchining chapi ekranda chapda. */
 const sx = computed(() => (cam.header.value && cam.header.value.mirrored ? -1 : 1));
 const around = computed(() => !!feedback.value && feedback.value.target !== "frontal");
 
-function point(deg: number, k = 1) {
+function point(deg: number, k: number) {
   const a = (deg * Math.PI) / 180;
   return [CX + sx.value * RX * k * Math.cos(a), CY - RY * k * Math.sin(a)];
 }
-const segments = computed(() =>
-  DIRECTIONS.map((pose, i) => {
-    const pts: string[] = [];
-    for (let d = -18; d <= 18; d += 6) pts.push(point(i * 45 + d).join(","));
-    const done = !!feedback.value && feedback.value.covered.indexOf(pose) >= 0;
-    return { pose, points: pts.join(" "), done };
-  }),
-);
-/** Boshning hozirgi yo'nalishi: Rust `Pose::direction` bilan bir xil ellips (12°, 7°). */
+const segments = computed(() => {
+  const out: { key: string; points: string; done: boolean }[] = [];
+  [INNER_K, 1].forEach((k, ring) => {
+    DIRECTIONS.forEach((pose, i) => {
+      const pts: string[] = [];
+      for (let d = -18; d <= 18; d += 6) pts.push(point(i * 45 + d, k).join(","));
+      const covered = feedback.value ? feedback.value.covered[ring] : null;
+      out.push({ key: ring + pose, points: pts.join(" "), done: !!covered && covered.indexOf(pose) >= 0 });
+    });
+  });
+  return out;
+});
+/** Boshning hozirgi yo'nalishi: Rust `Pose::direction` bilan bir xil ellipslar — ichki (12°, 7°)
+ * chegarasida nuqta ichki halqada, tashqi (17°, 9°) chegarasida — tashqi halqada. */
 const headDot = computed(() => {
   const f = feedback.value;
   if (!f || !around.value || f.yawDeg === null || f.pitchDeg === null) return null;
   const nx = f.yawDeg / 12, ny = f.pitchDeg / 7;
   const m = Math.sqrt(nx * nx + ny * ny);
   if (m < 0.01) return { left: CX + "%", top: CY + "%" };
-  const [x, y] = point((Math.atan2(ny, nx) * 180) / Math.PI, Math.min(m, 1.2) / 1.2);
+  // Shu yo'nalishda tashqi chegara ichki ellips bo'yicha qayerda: m === outerAt.
+  const mo = Math.sqrt((f.yawDeg / 17) * (f.yawDeg / 17) + (f.pitchDeg / 9) * (f.pitchDeg / 9));
+  const outerAt = m / Math.max(mo, 1e-6);
+  const k = m <= 1 ? m * INNER_K : Math.min(1.05, INNER_K + ((m - 1) / (outerAt - 1)) * (1 - INNER_K));
+  const [x, y] = point((Math.atan2(ny, nx) * 180) / Math.PI, k);
   return { left: x + "%", top: y + "%" };
 });
 
@@ -81,7 +93,7 @@ defineExpose({ stop: cam.stop });
       <!-- Oval: yuz shu ichida bo'lishi kerak (Rust: placement_hint) -->
       <div class="oval" :class="{ ok: feedback && (feedback.hint === 'hold' || feedback.captured) }" />
       <svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <polyline v-for="seg in segments" :key="seg.pose" :points="seg.points" :class="{ done: seg.done }" />
+        <polyline v-for="seg in segments" :key="seg.key" :points="seg.points" :class="{ done: seg.done }" />
       </svg>
       <div v-if="headDot" class="head-dot" :style="headDot" />
       <div v-if="flash" class="flash" />
@@ -131,7 +143,7 @@ defineExpose({ stop: cam.stop });
 /* Face ID kabi halqa: olingan yo'nalishlar yashil */
 .ring { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
 .ring polyline {
-  fill: none; stroke: rgba(255, 255, 255, .45); stroke-width: 6px; stroke-linecap: round;
+  fill: none; stroke: rgba(255, 255, 255, .45); stroke-width: 5px; stroke-linecap: round;
   vector-effect: non-scaling-stroke; -webkit-transition: stroke .2s; transition: stroke .2s;
 }
 .ring polyline.done { stroke: #12b76a; }
@@ -141,7 +153,7 @@ defineExpose({ stop: cam.stop });
 }
 .flash { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, .6); }
 .progress { text-align: center; margin: 8px 0 2px; }
-.dot { display: inline-block; width: 12px; height: 12px; margin: 0 5px; border-radius: 50%; background: var(--border); }
+.dot { display: inline-block; width: 9px; height: 9px; margin: 0 3px; border-radius: 50%; background: var(--border); }
 .dot.done { background: #12b76a; }
 .instruction { text-align: center; font-size: 18px; font-weight: 600; min-height: 26px; margin: 4px 0; }
 .debug { text-align: center; font-size: 12px; margin: 0 0 8px; }

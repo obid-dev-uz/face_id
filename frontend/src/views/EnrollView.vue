@@ -85,7 +85,8 @@ async function cancel() {
   step.value = "info";
 }
 
-const poseLabel = (p: string | null) => (p ? t("enroll.poseShort." + p) : t("enroll.gallery"));
+const poseLabel = (p: string | null, ring: number) =>
+  p ? t("enroll.poseShort." + p) + (ring ? " +" : "") : t("enroll.gallery");
 </script>
 
 <template>
@@ -136,7 +137,7 @@ const poseLabel = (p: string | null) => (p ? t("enroll.poseShort." + p) : t("enr
       <div class="thumbs">
         <div v-for="(s, i) in state.samples" :key="i" class="thumb">
           <img :src="s.thumb" alt="" />
-          <span class="thumb-label">{{ poseLabel(s.pose) }}</span>
+          <span class="thumb-label">{{ poseLabel(s.pose, s.ring) }}</span>
           <button type="button" class="thumb-del" :aria-label="$t('enroll.remove')" @click="removeSample(i)">×</button>
         </div>
       </div>

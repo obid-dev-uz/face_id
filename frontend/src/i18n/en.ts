@@ -26,7 +26,7 @@ export default {
     saved: "{name} saved",
     another: "Add another",
     gallery: "gallery",
-    rotate: "Move your head slowly to complete the circle",
+    rotate: "Move your head slowly: a small circle first, then a wider one to fill both rings",
     frontal: "Look straight ahead",
     poseShort: { frontal: "front", left: "left", upLeft: "up-left", up: "up", upRight: "up-right", right: "right", downRight: "down-right", down: "down", downLeft: "down-left" },
     hint: {

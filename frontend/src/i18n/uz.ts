@@ -26,7 +26,7 @@ export default {
     saved: "{name} saqlandi",
     another: "Yana qo'shish",
     gallery: "galereya",
-    rotate: "Boshingizni sekin aylantirib, halqani to'ldiring",
+    rotate: "Boshingizni sekin aylantiring: avval ozroq, keyin ko'proq burib, ikkala halqani to'ldiring",
     frontal: "To'g'ri qarang",
     poseShort: { frontal: "to'g'ri", left: "chap", upLeft: "chap-yuqori", up: "yuqori", upRight: "o'ng-yuqori", right: "o'ng", downRight: "o'ng-past", down: "past", downLeft: "chap-past" },
     hint: {

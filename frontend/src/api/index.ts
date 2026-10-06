@@ -127,6 +127,8 @@ export function readFile(file: Blob): Promise<Uint8Array> {
 export interface EnrollSample {
   thumb: string;
   pose: string | null;
+  /** 0 — ichki halqa, 1 — tashqi (ko'proq burilgan). */
+  ring: number;
   score: number;
 }
 

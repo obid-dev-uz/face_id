@@ -31,8 +31,8 @@ export interface EnrollFeedback {
   count: number;
   target: Pose | null;
   hint: EnrollHint | null;
-  /** Aylanadagi olingan yo'nalishlar. */
-  covered: Pose[];
+  /** Halqalardagi olingan yo'nalishlar: [ichki, tashqi]. */
+  covered: Pose[][];
   captured: boolean;
   yawDeg: number | null;
   pitchDeg: number | null;
